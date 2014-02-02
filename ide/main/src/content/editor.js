@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+//Added By Anshuman: To incorporate LocalStorage Services
+Components.utils.import("resource://gre/modules/Services.jsm");
+
+
 /*
  * An UI of Selenium IDE.
  */
@@ -721,8 +725,9 @@ Editor.prototype.updateDeveloperTools = function (show) {
   $("reload-button").disabled = !show;
 };
 
-Editor.prototype.addCommand = function (command, target, value, window, insertBeforeLastCommand) {
+Editor.prototype.addCommand = function (command, target, value, window, insertBeforeLastCommand, element) {
   this.log.debug("addCommand: command=" + command + ", target=" + target + ", value=" + value + " window.name=" + window.name);
+  	
   if (command != 'open' &&
       command != 'selectWindow' &&
       command != 'selectFrame') {
@@ -730,7 +735,7 @@ Editor.prototype.addCommand = function (command, target, value, window, insertBe
       var top = this._getTopWindow(window);
       this.log.debug("top=" + top);
       var path = this.getPathAndUpdateBaseURL(top)[0];
-      this.addCommand("open", path, '', top);
+      this.addCommand("open", path, '', top, element);
       this.recordTitle(top);
     }
     if (!this.safeLastWindow.isSameWindow(window)) {
@@ -752,22 +757,22 @@ Editor.prototype.addCommand = function (command, target, value, window, insertBe
         this.log.debug("branch=" + branch);
         if (branch == 0 && srcPath.size > 1) {
           // go to root
-          this.addCommand('selectFrame', 'relative=top', '', window);
+          this.addCommand('selectFrame', 'relative=top', '', window, element);
         } else {
           for (i = srcPath.length - 1; i > branch; i--) {
-            this.addCommand('selectFrame', 'relative=up', '', window);
+            this.addCommand('selectFrame', 'relative=up', '', window, element);
           }
         }
         for (i = branch + 1; i < destPath.length; i++) {
-          this.addCommand('selectFrame', destPath[i].name, '', window);
+          this.addCommand('selectFrame', destPath[i].name, '', window, element);
         }
       } else {
         // popup
         var windowName = window.name;
         if (windowName == '') {
-          this.addCommand('selectWindow', 'null', '', window);
+          this.addCommand('selectWindow', 'null', '', window, element);
         } else {
-          this.addCommand('selectWindow', "name=" + windowName, '', window);
+          this.addCommand('selectWindow', "name=" + windowName, '', window, element);
         }
       }
     }
@@ -775,11 +780,14 @@ Editor.prototype.addCommand = function (command, target, value, window, insertBe
   //resultBox.inputField.scrollTop = resultBox.inputField.scrollHeight - resultBox.inputField.clientHeight;
   this.clearLastCommand();
   this.safeLastWindow.setWindow(window);
+  //======================================================================================================================================================================
+  sendElementOverHttp(command, target, value, element);
+  //======================================================================================================================================================================
   var command = new Command(command, target, value);
   // bind to the href attribute instead of to window.document.location, which
   // is an object reference
   command.lastURL = window.document.location.href;
-
+  
   if (insertBeforeLastCommand && this.view.getRecordIndex() > 0) {
     var index = this.view.getRecordIndex() - 1;
     this.getTestCase().commands.splice(index, 0, command);
@@ -792,6 +800,137 @@ Editor.prototype.addCommand = function (command, target, value, window, insertBe
     this.timeoutID = setTimeout("editor.clearLastCommand()", 300);
   }
 };
+
+//======================================================================================================================================================================
+//====================================================================== Modified By Anshuman ==========================================================================
+//======================================================================================================================================================================
+
+
+//Modified By Anshuman: Sending the Record Action over Http Post to OpKey Selenium Recorder
+function sendElementOverHttp(command, target, value, element){
+	var jsonObject = new Object();
+	jsonObject.Command = command;
+	jsonObject.Target = target;
+	jsonObject.Value = value;
+	
+	//Parent Properties is needed for OR Hierarchy, so the getParentObjectProps() method will take care if the element is null
+	try{
+	  jsonObject.ParentProperties = getParentObjectProps(element);
+	}catch(err){
+	  //cant do anything, the IDE must be open in FLOATING mode(not docked with FF)
+	}
+	
+	if(element!=null){
+	  //URL is mandatory for OpenBrowser Keyword, so we have to extract it either ways
+	  jsonObject.URL = element.ownerDocument.URL;
+	  jsonObject.ObjectProperties = getElementObjectProps(element);
+	
+	} else{
+	  try{
+	      //URL is mandatory for OpenBrowser Keyword, so we have to extract it either ways
+	      jsonObject.URL = window.top.getBrowser().selectedBrowser.contentWindow.location.href;
+		}catch(err){
+		  //cant do anything, the IDE must be open in FLOATING mode(not docked with FF)
+		}
+	  
+	}
+	var p = JSON.stringify(jsonObject);
+	
+	//alert(p);
+	
+	//load jquery dynamically...
+	//http://stackoverflow.com/questions/532507/firefox-extension-with-jquery-1-3
+	var jsLoader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"].getService(Components.interfaces.mozIJSSubScriptLoader);
+	jsLoader.loadSubScript("chrome://selenium-ide/content/jquery-1.3.2.js");	
+	$mb = jQuery.noConflict();
+	$mb.post(getOpKeySeleniumServerAddress(), p, function(data) {
+		$mb('.result').html(data);
+	});
+	
+}
+
+//======================================================================================================================================================================
+
+//Modified By Anshuman: Gets the Parent Page Property of the current
+function getParentObjectProps(element){
+  	var parentProp = new Object();
+	if(element!=null){
+	  parentProp.Title = element.ownerDocument.title.toString();
+	  parentProp.URL = element.ownerDocument.URL.toString();
+	
+	} else{
+	  parentProp.Title = window.top.getBrowser().selectedBrowser.contentTitle;
+	  parentProp.URL = window.top.getBrowser().selectedBrowser.contentWindow.location.href;
+	
+	}
+	return parentProp;
+}
+
+//======================================================================================================================================================================
+
+//Modified By Anshuman: Gets all Attribs & Properties of an Element
+function getElementObjectProps(element){
+	var jsonProps = {}
+	jsonProps['Tag'] = element.tagName.toLowerCase();
+	if("innerText" in element){
+	  jsonProps['InnerText'] = element.innerText;
+	}else{
+	  if("childNodes" in element && element.childNodes.length > 0){ 
+	    jsonProps['InnerText'] = "";
+	    for(var iter = 0; iter<element.childNodes.length; iter++){
+		  if( element.childNodes[iter].nodeValue!= null){
+	        jsonProps['InnerText'] += element.childNodes[iter].nodeValue; //http://stackoverflow.com/questions/1760126/how-do-i-choose-between-innertext-or-nodevalue
+			jsonProps['InnerText'] += "\n";
+		  }
+		}
+		
+		jsonProps['InnerText'] = jsonProps['InnerText'].trim();
+	  }
+	}
+	
+	jsonProps['Height'] = element.offsetHeight;
+	jsonProps['Width'] = element.offsetWidth;
+	jsonProps['Left'] = element.offsetLeft;
+	jsonProps['Top'] = element.offsetTop;
+	
+	for (var attr, i=0, attrs=element.attributes, l=attrs.length; i<l; i++){
+		attr = attrs.item(i);
+		jsonProps[attr.nodeName] =  attr.nodeValue;
+	}
+	
+	
+	return jsonProps;
+}
+
+//======================================================================================================================================================================
+
+//Modified By Anshuman: For Persisting the OpKey http Server Address
+function getOpKeySeleniumServerAddress() {
+    try {
+        var serverAddress = Services.prefs.getCharPref("extensions.OpKeySeleniumIDE.serverAddress");
+        return serverAddress;
+    } catch (e) {
+        //the preference might not exist yet
+        var serverAddress = 'http://127.0.0.1:8282';
+        // Setting the preference
+        Services.prefs.setCharPref("extensions.OpKeySeleniumIDE.serverAddress", serverAddress);
+        return Services.prefs.getCharPref("extensions.OpKeySeleniumIDE.serverAddress");
+    }
+
+}
+
+//======================================================================================================================================================================
+
+//Modified By Anshuman: For Persisting the OpKey http Server Address
+function setOpKeySeleniumServerAddress(serverAddress) {
+    Services.prefs.setCharPref("extensions.OpKeySeleniumIDE.serverAddress", serverAddress);
+}
+
+
+//======================================================================================================================================================================
+//======================================================================================================================================================================
+
+
 
 Editor.prototype.clearLastCommand = function () {
   this.lastCommandIndex = null;
@@ -859,11 +998,8 @@ Editor.prototype.playCurrentTestCase = function (next, index, total) {
   }, index > 0 /* reuse last window if index > 0 */);
 };
 
-Editor.prototype.playTestSuite = function (startIndex) {
-  if (!startIndex) {
-    startIndex = 0;
-  }
-  var index = startIndex - 1;
+Editor.prototype.playTestSuite = function () {
+  var index = -1;
   this.app.getTestSuite().tests.forEach(function (test) {
     if (test.testResult) {
       delete test.testResult;
@@ -872,7 +1008,7 @@ Editor.prototype.playTestSuite = function (startIndex) {
   this.suiteTreeView.refresh();
   this.testSuiteProgress.reset();
   var self = this;
-  var total = this.app.getTestSuite().tests.length - startIndex;
+  var total = this.app.getTestSuite().tests.length;
   (function () {
     if (++index < self.app.getTestSuite().tests.length) {
       self.suiteTreeView.scrollToRow(index);

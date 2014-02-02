@@ -23,15 +23,15 @@ Recorder.addEventHandler('type', 'change', function(event) {
   var type = event.target.type;
   if ('input' == tagName && Recorder.inputTypes.indexOf(type) >= 0) {
     if (event.target.value.length > 0) {
-      // TODO figure out if we need sendKeys or type and record it
-      this.record("type", this.findLocators(event.target), event.target.value);
+      //use sendKeys to type
+      this.recordExtended("type", this.findLocators(event.target), event.target.value, event.target);
     } else {
       //use type to clear
-      this.record("type", this.findLocators(event.target), event.target.value);
+      this.recordExtended("type", this.findLocators(event.target), event.target.value, event.target);
     }
   } else if ('textarea' == tagName) {
     //use type for file uploads
-    this.record("type", this.findLocators(event.target), event.target.value);
+    this.recordExtended("type", this.findLocators(event.target), event.target.value, event.target);
   }
 });
 
@@ -92,7 +92,7 @@ Recorder.addEventHandler('select', 'change', function(event) {
 			if (!event.target.multiple) {
                 var option = event.target.options[event.target.selectedIndex];
 				this.log.debug('selectedIndex=' + event.target.selectedIndex);
-				this.record("select", this.findLocators(event.target), this.getOptionLocator(option));
+				this.recordExtended("select", this.findLocators(event.target), this.getOptionLocator(option), event.target);
 			} else {
 				this.log.debug('change selection on select-multiple');
 				var options = event.target.options;
@@ -104,9 +104,9 @@ Recorder.addEventHandler('select', 'change', function(event) {
 					if (options[i]._wasSelected != options[i].selected) {
                         var value = this.getOptionLocator(options[i]);
 						if (options[i].selected) {
-							this.record("addSelection", this.findLocators(event.target), value);
+							this.recordExtended("addSelection", this.findLocators(event.target), value, event.target);
 						} else {
-							this.record("removeSelection", this.findLocators(event.target), value);
+							this.recordExtended("removeSelection", this.findLocators(event.target), value, event.target);
 						}
 						options[i]._wasSelected = options[i].selected;
 					}
@@ -135,14 +135,14 @@ Recorder.addEventHandler('clickLocator', 'click', function(event) {
                 // }, { alwaysRecord: true, capture: true });
                 //
                 if (this.mouseoverLocator) {
-                    this.record('mouseOver', this.mouseoverLocator, '');
+                    this.recordExtended('mouseOver', this.mouseoverLocator, '', event.target);
                     delete this.mouseoverLocator;
                 }
-                this.record("click", this.findLocators(event.target), '');
+                this.recordExtended("click", this.findLocators(event.target), '', event.target);
             } else {
                 var target = event.target;
                 this.callIfMeaningfulEvent(function() {
-                        this.record("click", this.findLocators(target), '');
+                        this.recordExtended("click", this.findLocators(target), '', target);
                     });
             }
 		}

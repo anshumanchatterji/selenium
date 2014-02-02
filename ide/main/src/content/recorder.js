@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
+
+
 function Recorder(window) {
 	this.log = Recorder.log;
 	this.window = window;
 	this.observers = [];
 	this.attach();
     this.registerUnloadListener();
+	
 }
+
+
+
 
 Recorder.WINDOW_RECORDER_PROPERTY = "_Selenium_IDE_Recorder";
 
@@ -154,13 +160,21 @@ Recorder.record = function(recorder, command, target, value) {
 	recorder.record(command, target, value);
 }
 
-Recorder.prototype.record = function(command, target, value, insertBeforeLastCommand) {
+Recorder.prototype.record = function(command, target, value, insertBeforeLastCommand, element) {
 	for (var i = 0; i < this.observers.length; i++) {
 		if (this.observers[i].recordingEnabled) {
-			this.observers[i].addCommand(command, target, value, this.window, insertBeforeLastCommand);
+			this.observers[i].addCommand(command, target, value, this.window, insertBeforeLastCommand, element);
 		}
 	}
 }
+
+//Modified By Anshuman: Changed prototype.record to prototype.recordExtended, 
+//this takes into account one more argument, the element
+Recorder.prototype.recordExtended = function(command, target, value, element) {
+	this.record(command, target, value, false, element);
+}
+
+
 
 Recorder.prototype.findLocator = function(element) {
 	return this.locatorBuilders.build(element);

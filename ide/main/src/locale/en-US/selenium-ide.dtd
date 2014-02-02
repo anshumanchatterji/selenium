@@ -1,4 +1,4 @@
-<!ENTITY selenium-ide.name "Selenium IDE">
+<!ENTITY selenium-ide.name "Selenium IDE for OpKey">
 <!ENTITY selenium-ide.version "2.5.0">
 <!ENTITY selenium-ide.sidebar.title "&selenium-ide.name; &selenium-ide.version;">
 <!ENTITY selenium-ide.standalone.title "&selenium-ide.name; &selenium-ide.version;">

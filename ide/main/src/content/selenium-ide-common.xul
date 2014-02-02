@@ -68,6 +68,7 @@ limitations under the License.
   <script type="application/x-javascript" src="chrome://selenium-ide/content/testSuiteProgress.js"/>
   <script type="application/x-javascript" src="chrome://selenium-ide/content/debugger.js"/>
   <script type="application/x-javascript" src="chrome://selenium-ide/content/plugin.js"/>
+  <script type="application/x-javascript" src="chrome://selenium-ide/content/opkey-configuration-settings.js"/>
   
   <stringbundle id="strings" src="chrome://selenium-ide/locale/selenium-ide.properties" />
 
@@ -227,6 +228,8 @@ limitations under the License.
         </menupopup>
       </menu>
       <menuitem id="internalTestsMenu" label="&internalTestsMenu.label;" oncommand="window.editor.showInBrowser('chrome://selenium-ide/content/tests/index.html');" />
+	  <menuseparator/>
+	  <menuitem label="OpKey Settings" oncommand="updateOpKeyConfigurationSettings();" /><!--Added By Anshuman: For Configuration Settings like port etc-->
     </menupopup>
   </menu>
   <menu id="menu_help" label="&helpMenu.label;">
