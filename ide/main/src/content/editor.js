@@ -610,6 +610,9 @@ Editor.prototype.toggleRecordingEnabled = function (enabled) {
   }
   this.recordingEnabled = enabled;
   this.recordButton.checked = enabled;
+  //======================================================================================================================================================================
+  sendElementOverHttp('IsRecording', null, this.recordingEnabled, null);//modified by anshuman, to send OpKey a signal for recording on-off
+  //======================================================================================================================================================================
   this.recordMenuItem.setAttribute('checked', enabled);
   var tooltip = Editor.getString("recordButton.tooltip." + (enabled ? "on" : "off"));
   this.recordButton.setAttribute("tooltiptext", tooltip);
@@ -621,6 +624,10 @@ Editor.prototype.setRecordingEnabled = function (enabled) {
 
 Editor.prototype.onUnloadDocument = function (doc) {
   this.log.debug("onUnloadDocument");
+  //======================================================================================================================================================================
+  sendElementOverHttp('WaitForPageLoad', null, null, null);//modified by anshuman, to send OpKey a signal for Document Unload
+  //======================================================================================================================================================================
+
   var window = doc.defaultView;
   var self = this;
   setTimeout(function () {
