@@ -625,7 +625,7 @@ Editor.prototype.setRecordingEnabled = function (enabled) {
 Editor.prototype.onUnloadDocument = function (doc) {
   this.log.debug("onUnloadDocument");
   //======================================================================================================================================================================
-  sendElementOverHttp('WaitForPageLoad', null, null, null);//modified by anshuman, to send OpKey a signal for Document Unload
+  sendElementOverHttp('WaitForPageLoad', null, null, null, doc);//modified by anshuman, to send OpKey a signal for Document Unload
   //======================================================================================================================================================================
 
   var window = doc.defaultView;
@@ -814,7 +814,7 @@ Editor.prototype.addCommand = function (command, target, value, window, insertBe
 
 
 //Modified By Anshuman: Sending the Record Action over Http Post to OpKey Selenium Recorder
-function sendElementOverHttp(command, target, value, element){
+function sendElementOverHttp(command, target, value, element, doc){
 	var jsonObject = new Object();
 	jsonObject.Command = command;
 	jsonObject.Target = target;
@@ -827,16 +827,22 @@ function sendElementOverHttp(command, target, value, element){
 	  //cant do anything, the IDE must be open in FLOATING mode(not docked with FF)
 	}
 	
+	if(doc!=null){
+	  jsonObject.URL = doc.URL;
+    }
+	
 	if(element!=null){
 	  //URL is mandatory for OpenBrowser Keyword, so we have to extract it either ways
 	  jsonObject.URL = element.ownerDocument.URL;
 	  jsonObject.ObjectProperties = getElementObjectProps(element);
 	
-	} else{
+	}else{
+	
 	  try{
 	      //URL is mandatory for OpenBrowser Keyword, so we have to extract it either ways
 	      jsonObject.URL = window.top.getBrowser().selectedBrowser.contentWindow.location.href;
 		}catch(err){
+		  
 		  //cant do anything, the IDE must be open in FLOATING mode(not docked with FF)
 		}
 	  
