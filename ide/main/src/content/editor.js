@@ -824,6 +824,7 @@ function sendElementOverHttp(command, target, value, element, doc){
 	try{
 	  jsonObject.ParentProperties = getParentObjectProps(element);
 	}catch(err){
+	  //alert(err);
 	  //cant do anything, the IDE must be open in FLOATING mode(not docked with FF)
 	}
 	
@@ -872,10 +873,15 @@ function getParentObjectProps(element){
 	  parentProp.URL = element.ownerDocument.URL.toString();
 	
 	} else{
-	  parentProp.Title = window.top.getBrowser().selectedBrowser.contentTitle;
-	  parentProp.URL = window.top.getBrowser().selectedBrowser.contentWindow.location.href;
+	//http://stackoverflow.com/questions/410411/get-current-page-url-from-a-firefox-sidebar-extension
+	  var currentWindow = Components.classes["@mozilla.org/appshell/window-mediator;1"].getService(Components.interfaces.nsIWindowMediator).getMostRecentWindow("navigator:browser");
+      var selectedBrowser = currentWindow.getBrowser().selectedBrowser;
+	
+      parentProp.Title = selectedBrowser.contentTitle;
+	  parentProp.URL = selectedBrowser.contentWindow.location.href;
 	
 	}
+	//alert(JSON.stringify(parentProp));
 	return parentProp;
 }
 
