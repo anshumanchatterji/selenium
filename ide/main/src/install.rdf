@@ -5,12 +5,12 @@
         <em:id>{66d128e0-4fbd-40f1-8c76-d9228a428549}</em:id>
         <em:name>Selenium IDE for OpKey v9</em:name>
         <em:version>2.5.0</em:version>
-        <em:creator>Shinya Kasatani</em:creator>
+        <em:creator>Shinya Kasatani (Enhanced for OpKey by CresTech Software Systems Pvt. Ltd.)</em:creator>
         <em:developer>Adam Goucher</em:developer>
         <em:developer>Samit Badle</em:developer>
         <em:developer>Dave Hunt</em:developer>
 		<em:developer>Anshuman Chatterjee</em:developer>
-        <em:description>Record and play your tests from within OpKey</em:description>
+        <em:description>Record your testscripts in the form of Keywords in OpKey. </em:description>
         <em:type>2</em:type>
         <em:homepageURL>http://opkey.crestechglobal.com/</em:homepageURL>
         <em:optionsURL>chrome://selenium-ide/content/optionsDialog.xul</em:optionsURL>
