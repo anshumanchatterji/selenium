@@ -868,9 +868,6 @@ function sendElementOverHttp(command, target, value, element, doc){
 //Modified By Anshuman: Gets the Parent Page Property of the current
 function getParentObjectProps(element){
   	var parentProp = new Object();
-	parentProp.Type = "HTML PAGE";
-	parentProp.Tag = "html";
-	parentProp.index = "0";
 	if(element!=null){
 	  parentProp.Title = element.ownerDocument.title.toString();
 	  parentProp.URL = element.ownerDocument.URL.toString();
