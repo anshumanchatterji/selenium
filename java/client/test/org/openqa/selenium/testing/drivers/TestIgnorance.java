@@ -1,19 +1,19 @@
-/*
-Copyright 2011 Selenium committers
-Copyright 2011 Software Freedom Conservancy
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 package org.openqa.selenium.testing.drivers;
 
@@ -26,8 +26,6 @@ import static org.openqa.selenium.testing.Ignore.Driver.FIREFOX;
 import static org.openqa.selenium.testing.Ignore.Driver.HTMLUNIT;
 import static org.openqa.selenium.testing.Ignore.Driver.IE;
 import static org.openqa.selenium.testing.Ignore.Driver.MARIONETTE;
-import static org.openqa.selenium.testing.Ignore.Driver.OPERA;
-import static org.openqa.selenium.testing.Ignore.Driver.OPERA_MOBILE;
 import static org.openqa.selenium.testing.Ignore.Driver.PHANTOMJS;
 import static org.openqa.selenium.testing.Ignore.Driver.REMOTE;
 import static org.openqa.selenium.testing.Ignore.Driver.SAFARI;
@@ -44,7 +42,6 @@ import com.google.common.collect.Sets;
 import org.junit.runners.model.FrameworkMethod;
 import org.openqa.selenium.Platform;
 import org.openqa.selenium.testing.Ignore;
-import org.openqa.selenium.testing.IgnoreComparator;
 import org.openqa.selenium.testing.JavascriptEnabled;
 import org.openqa.selenium.testing.NativeEventsRequired;
 import org.openqa.selenium.testing.NeedsLocalEnvironment;
@@ -64,6 +61,7 @@ public class TestIgnorance {
   private Set<String> methods = Sets.newHashSet();
   private Set<String> only = Sets.newHashSet();
   private Set<String> ignoreMethods = Sets.newHashSet();
+  private Set<String> ignoreClasses = Sets.newHashSet();
   private Browser browser;
 
   public TestIgnorance(Browser browser) {
@@ -77,6 +75,11 @@ public class TestIgnorance {
     String method = System.getProperty("method");
     if (method != null) {
       methods.addAll(Arrays.asList(method.split(",")));
+    }
+
+    String ignoreClass = System.getProperty("ignore_class");
+    if (ignoreClass != null) {
+      ignoreClasses.addAll(Arrays.asList(ignoreClass.split(",")));
     }
 
     String skip = System.getProperty("ignore_method");
@@ -131,24 +134,36 @@ public class TestIgnorance {
     }
 
     // We only have native events on Linux and Windows.
-    Platform platform = Platform.getCurrent();
+    Platform platform = getEffectivePlatform();
     return !(platform.is(LINUX) || platform.is(WINDOWS));
   }
 
+  private static Platform getEffectivePlatform() {
+    if (SauceDriver.shouldUseSauce()) {
+      return SauceDriver.getEffectivePlatform();
+    }
+
+    return Platform.getCurrent();
+  }
+
   private boolean isIgnoredDueToBeingOnSauce(FrameworkMethod method, Object test) {
-    return SauceDriver.shouldUseSauce() &&
-           (method.getMethod().getAnnotation(NeedsLocalEnvironment.class) != null ||
-            test.getClass().getAnnotation(NeedsLocalEnvironment.class) != null);
+    boolean isLocal = method.getMethod().getAnnotation(NeedsLocalEnvironment.class) != null
+                      || test.getClass().getAnnotation(NeedsLocalEnvironment.class) != null;
+    if (SauceDriver.shouldUseSauce()) {
+      return isLocal;
+    } else {
+      return Boolean.getBoolean("local_only") && !isLocal;
+    }
   }
 
   private boolean isIgnoredDueToJavascript(JavascriptEnabled enabled) {
     return enabled != null && !browser.isJavascriptEnabled();
-
   }
 
   private boolean isIgnoredDueToEnvironmentVariables(FrameworkMethod method, Object test) {
     return (!only.isEmpty() && !only.contains(test.getClass().getSimpleName())) ||
            (!methods.isEmpty() && !methods.contains(method.getName())) ||
+           ignoreClasses.contains(test.getClass().getSimpleName()) ||
            ignoreMethods.contains(method.getName());
   }
 
@@ -189,12 +204,10 @@ public class TestIgnorance {
         break;
 
       case opera:
-        comparator.addDriver(OPERA);
         break;
 
-      case opera_mobile:
-        comparator.addDriver(OPERA_MOBILE);
-        comparator.addDriver(REMOTE);
+      case operablink:
+        comparator.addDriver(CHROME);
         break;
 
       case phantomjs:

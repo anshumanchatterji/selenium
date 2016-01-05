@@ -1,9 +1,9 @@
 ﻿// <copyright file="CompositeAction.cs" company="WebDriver Committers">
-// Copyright 2007-2011 WebDriver committers
-// Copyright 2007-2011 Google Inc.
-// Portions copyright 2011 Software Freedom Conservancy
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements. See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership. The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
@@ -41,7 +41,6 @@ namespace OpenQA.Selenium.Interactions
             return this;
         }
 
-        #region IAction Members
         /// <summary>
         /// Performs the actions defined in this list of actions.
         /// </summary>
@@ -52,7 +51,5 @@ namespace OpenQA.Selenium.Interactions
                 action.Perform();
             }
         }
-
-        #endregion
     }
 }

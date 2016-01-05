@@ -1,20 +1,19 @@
-#!/usr/bin/python
-
-# Copyright 2008-2010 WebDriver committers
-# Copyright 2008-2010 Google Inc.
+# Licensed to the Software Freedom Conservancy (SFC) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The SFC licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
 
 import pytest
 # import time
@@ -38,37 +37,37 @@ class FrameSwitchingTest(unittest.TestCase):
       if self.driver.capabilities['browserName'] == 'firefox' and self.driver.capabilities['version'].startswith('3'):
         pytest.skip()
       self._loadPage("frameset")
-      self.driver.switch_to_frame(2)
+      self.driver.switch_to.frame(2)
       element = self.driver.find_element_by_id("email")
       self.assertEquals("email", element.get_attribute("type"))
 
     def testShouldBeAbleToSwitchToAnIframeByItsIndex(self):
       self._loadPage("iframes")
-      self.driver.switch_to_frame(0)
+      self.driver.switch_to.frame(0)
       element = self.driver.find_element_by_id("id-name1")
       self.assertEquals("id", element.get_attribute("value"))
 
     def testShouldBeAbleToSwitchToAFrameByItsName(self):
       self._loadPage("frameset")
-      self.driver.switch_to_frame("fourth")
+      self.driver.switch_to.frame("fourth")
       element = self.driver.find_element_by_tag_name("frame")
       self.assertEquals("child1", element.get_attribute("name"))
 
     def testShouldBeAbleToSwitchToAnIframeByItsName(self):
       self._loadPage("iframes")
-      self.driver.switch_to_frame("iframe1-name");
+      self.driver.switch_to.frame("iframe1-name");
       element = self.driver.find_element_by_name("id-name1")
       self.assertEquals("name", element.get_attribute("value"))
 
     def testShouldBeAbleToSwitchToAFrameByItsID(self):
       self._loadPage("frameset")
-      self.driver.switch_to_frame("fifth")
+      self.driver.switch_to.frame("fifth")
       element = self.driver.find_element_by_name("windowOne")
       self.assertEquals("Open new window", element.text)
 
     def testShouldBeAbleToSwitchToAnIframeByItsID(self):
       self._loadPage("iframes")
-      self.driver.switch_to_frame("iframe1");
+      self.driver.switch_to.frame("iframe1");
       element = self.driver.find_element_by_name("id-name1")
       self.assertEquals("name", element.get_attribute("value"))
 
@@ -77,14 +76,14 @@ class FrameSwitchingTest(unittest.TestCase):
         pytest.skip()
       self._loadPage("frameset")
       frame = self.driver.find_element_by_name("third")
-      self.driver.switch_to_frame(frame)
+      self.driver.switch_to.frame(frame)
       element = self.driver.find_element_by_id("email")
       self.assertEquals("email", element.get_attribute("type"))
 
     def testShouldBeAbleToSwitchToAnIFrameUsingAPreviouslyLocatedWebElement(self):
       self._loadPage("iframes")
       frame = self.driver.find_element_by_tag_name("iframe")
-      self.driver.switch_to_frame(frame)
+      self.driver.switch_to.frame(frame)
       element = self.driver.find_element_by_name("id-name1")
       self.assertEquals("name", element.get_attribute("value"))
 
@@ -92,51 +91,51 @@ class FrameSwitchingTest(unittest.TestCase):
       self._loadPage("frameset")
       frame = self.driver.find_element_by_tag_name("frameset")
       try:
-        self.driver.switch_to_frame(frame)
+        self.driver.switch_to.frame(frame)
         self.fail()
       except NoSuchFrameException:
         pass
 
     def testFrameSearchesShouldBeRelativeToTheCurrentlySelectedFrame(self):
       self._loadPage("frameset")
-      self.driver.switch_to_frame("sixth")
+      self.driver.switch_to.frame("sixth")
       element = self.driver.find_element_by_id("iframe_page_heading")
       self.assertEquals("This is the heading", element.text)
 
       try:
-        self.driver.switch_to_frame("third")
+        self.driver.switch_to.frame("third")
         self.fail()
       except NoSuchFrameException:
         pass
 
-      self.driver.switch_to_default_content()
-      self.driver.switch_to_frame("third")
+      self.driver.switch_to.default_content()
+      self.driver.switch_to.frame("third")
 
       try:
-        self.driver.switch_to_frame("third")
+        self.driver.switch_to.frame("third")
         self.fail()
       except NoSuchFrameException:
         pass
 
       # Now make sure we can go back.
-      self.driver.switch_to_default_content()
-      self.driver.switch_to_frame("sixth")
+      self.driver.switch_to.default_content()
+      self.driver.switch_to.frame("sixth")
       element = self.driver.find_element_by_id("iframe_page_heading")
       self.assertEquals("This is the heading", element.text)
 
     def testShouldBeAbleToSelectChildFrames(self):
       self._loadPage("frameset")
-      self.driver.switch_to_frame("sixth")
-      self.driver.switch_to_frame(0)
+      self.driver.switch_to.frame("sixth")
+      self.driver.switch_to.frame(0)
       element = self.driver.find_element_by_id("id-name1")
       self.assertEquals("id", element.get_attribute("value"))
 
     def testShouldThrowFrameNotFoundExceptionLookingUpSubFramesWithSuperFrameNames(self):
       self._loadPage("frameset")
-      self.driver.switch_to_frame("fourth")
+      self.driver.switch_to.frame("fourth")
 
       try:
-        self.driver.switch_to_frame("second")
+        self.driver.switch_to.frame("second")
         self.fail("Expected NoSuchFrameException")
       except NoSuchFrameException:
         pass
@@ -144,7 +143,7 @@ class FrameSwitchingTest(unittest.TestCase):
     def testShouldThrowAnExceptionWhenAFrameCannotBeFound(self):
       self._loadPage("xhtmlTest")
       try:
-        self.driver.switch_to_frame("nothing here")
+        self.driver.switch_to.frame("nothing here")
         self.fail("Should not have been able to switch")
       except NoSuchFrameException:
         pass
@@ -152,7 +151,7 @@ class FrameSwitchingTest(unittest.TestCase):
     def testShouldThrowAnExceptionWhenAFrameCannotBeFoundByIndex(self):
       self._loadPage("xhtmlTest")
       try:
-        self.driver.switch_to_frame(27)
+        self.driver.switch_to.frame(27)
         self.fail("Should not have been able to switch")
       except NoSuchFrameException:
         pass
@@ -160,7 +159,7 @@ class FrameSwitchingTest(unittest.TestCase):
     # disabled till we use the Java Webserver
     #def testThatWeStillReferToTheSameFrameOnceItHasBeenSelected(self):
     #    self._loadPage("frameset")
-    #    self.driver.switch_to_frame(2)
+    #    self.driver.switch_to.frame(2)
     #    checkbox = self.driver.find_element_by_xpath("//input[@name='cheeky']")
     #    checkbox.toggle()
     #    checkbox.submit()
@@ -177,11 +176,11 @@ class FrameSwitchingTest(unittest.TestCase):
     #def testThatWeFocusOnTheReplacementWhenAFrameFollowsALinkToATopTargettedPage(self):
     #    self._loadPage("frameset")
     #    time.sleep(1)
-    #    self.driver.switch_to_frame(0)
+    #    self.driver.switch_to.frame(0)
     #    self.driver.find_element_by_link_text("top").click()
     #    time.sleep(1)
     #    self.assertEqual("XHTML Test Page", self.driver.title)
-    #    self.assertEqual("XHTML Test Page", 
+    #    self.assertEqual("XHTML Test Page",
     #    self.driver.find_element_by_xpath("/html/head/title").text)
 
     def testThatWeShouldNotAutoSwitchFocusToAnIFrameWhenAPageContainingThemIsLoaded(self):
@@ -192,14 +191,22 @@ class FrameSwitchingTest(unittest.TestCase):
 
     def testShouldAllowAUserToSwitchFromAnIframeBackToTheMainContentOfThePage(self):
         self._loadPage("iframes")
-        self.driver.switch_to_frame(0)
-        self.driver.switch_to_default_content()
+        self.driver.switch_to.frame(0)
+        self.driver.switch_to.default_content()
         self.driver.find_element_by_id('iframe_page_heading')
-        
+
+    def testShouldBeAbleToSwitchToParentFrame(self):
+        if self.driver.capabilities['browserName'] == 'phantomjs':
+            pytest.xfail("phantomjs driver does not implement switch to parent frame")
+        self._loadPage("iframes")
+        self.driver.switch_to.frame(0)
+        self.driver.switch_to.parent_frame()
+        self.driver.find_element_by_id('iframe_page_heading')
+
     # Disabled till we use the Java WebServer
     #def testShouldAllowTheUserToSwitchToAnIFrameAndRemainFocusedOnIt(self):
     #    self._loadPage("iframes")
-    #    self.driver.switch_to_frame(0)
+    #    self.driver.switch_to.frame(0)
     #    submitButton = self.driver.find_element_by_id("greeting")
     #    submitButton.click()
 
@@ -210,7 +217,7 @@ class FrameSwitchingTest(unittest.TestCase):
     # Disalbled till we used the Java Webserver
     #def testShouldBeAbleToClickInAFrame(self):
     #    self._loadPage("frameset")
-    #    self.driver.switch_to_frame("third")
+    #    self.driver.switch_to.frame("third")
     #    time.sleep(1)
     #    submitButton = self.driver.find_element_by_id("greeting")
     #    submitButton.click()
@@ -218,15 +225,15 @@ class FrameSwitchingTest(unittest.TestCase):
     #    time.sleep(0.5)
     #    hello = self.driver.find_element_by_id('greeting')
     #    self.assertEqual(hello.text, "Success!")
-    #    self.driver.switch_to_default_content()
+    #    self.driver.switch_to.default_content()
 
     def testShouldReturnFrameTitleNotWindowTitle(self):
         self._loadPage("frameset")
-        self.driver.switch_to_frame("third")
+        self.driver.switch_to.frame("third")
         self.assertEqual("Unique title", self.driver.title)
 
     def _pageURL(self, name):
-        return "http://localhost:%d/%s.html" % (self.webserver.port, name)
+        return self.webserver.where_is(name + '.html')
 
     def _loadSimplePage(self):
         self._loadPage("simpleTest")

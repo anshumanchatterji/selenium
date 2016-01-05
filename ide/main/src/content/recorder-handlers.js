@@ -19,6 +19,7 @@
  */
 Recorder.inputTypes = ["text", "password", "file", "datetime", "datetime-local", "date", "month", "time", "week", "number", "range", "email", "url", "search", "tel", "color"];
 Recorder.addEventHandler('type', 'change', function(event) {
+  if (event.target.tagName) {
   var tagName = event.target.tagName.toLowerCase();
   var type = event.target.type;
   if ('input' == tagName && Recorder.inputTypes.indexOf(type) >= 0) {
@@ -33,12 +34,14 @@ Recorder.addEventHandler('type', 'change', function(event) {
     //use type for file uploads
     this.recordExtended("type", this.findLocators(event.target), event.target.value, event.target);
   }
+  }
 });
 
 /*
  * select / addSelection / removeSelection
  */
 Recorder.addEventHandler('selectFocus', 'focus', function(event) {
+  if (event.target.nodeName) {
 		var tagName = event.target.nodeName.toLowerCase();
 		if ('select' == tagName && event.target.multiple) {
 			this.log.debug('remembering selections');
@@ -50,9 +53,11 @@ Recorder.addEventHandler('selectFocus', 'focus', function(event) {
 				}
 			}
 		}
+  }
 	}, { capture: true });
 
 Recorder.addEventHandler('selectMousedown', 'mousedown', function(event) {
+  if (event.target.nodeName) {
 		var tagName = event.target.nodeName.toLowerCase();
 		if ('option' == tagName) {
 			var parent = event.target.parentNode;
@@ -64,6 +69,7 @@ Recorder.addEventHandler('selectMousedown', 'mousedown', function(event) {
 				}
 			}
 		}
+  }
 	}, { capture: true });
 
 Recorder.prototype.getOptionLocator = function(option) {
@@ -87,6 +93,7 @@ Recorder.prototype.getOptionLocator = function(option) {
 };
 
 Recorder.addEventHandler('select', 'change', function(event) {
+  if (event.target.tagName) {
 		var tagName = event.target.tagName.toLowerCase();
 		if ('select' == tagName) {
 			if (!event.target.multiple) {
@@ -113,6 +120,7 @@ Recorder.addEventHandler('select', 'change', function(event) {
 				}
 			}
 		}
+  }
 	});
 
 Recorder.addEventHandler('clickLocator', 'click', function(event) {
@@ -152,7 +160,7 @@ Recorder.prototype.findClickableElement = function(e) {
 	if (!e.tagName) return null;
 	var tagName = e.tagName.toLowerCase();
 	var type = e.type;
-	if (e.hasAttribute("onclick") || e.hasAttribute("href") || tagName == "button" ||
+	if (e.hasAttribute("onclick") || e.hasAttribute("href") || tagName == "button" || tagName == "a" ||
 		(tagName == "input" && 
 		 (type == "submit" || type == "button" || type == "image" || type == "radio" || type == "checkbox" || type == "reset"))) {
 		return e;

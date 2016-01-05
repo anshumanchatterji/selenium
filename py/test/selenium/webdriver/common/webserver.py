@@ -1,17 +1,19 @@
-# Copyright 2008-2009 WebDriver committers
-# Copyright 2008-2009 Google Inc.
+# Licensed to the Software Freedom Conservancy (SFC) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The SFC licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
 
 """A simple web server for testing purpose.
 It serves the testing html pages that are needed by the webdriver unit tests."""
@@ -43,6 +45,7 @@ if not os.path.isdir(HTML_ROOT):
     LOGGER.error(message)
     assert 0, message
 
+DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8000
 
 
@@ -67,13 +70,15 @@ class HtmlOnlyHandler(BaseHTTPRequestHandler):
 
 class SimpleWebServer(object):
     """A very basic web server."""
-    def __init__(self, port=DEFAULT_PORT):
+    def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT):
         self.stop_serving = False
+        host = host
         port = port
         while True:
             try:
                 self.server = HTTPServer(
-                    ('', port), HtmlOnlyHandler)
+                    (host, port), HtmlOnlyHandler)
+                self.host = host
                 self.port = port
                 break
             except socket.error:
@@ -99,11 +104,14 @@ class SimpleWebServer(object):
         self.stop_serving = True
         try:
             # This is to force stop the server loop
-            urllib_request.URLopener().open("http://localhost:%d" % self.port)
+            urllib_request.URLopener().open("http://%s:%d" % (self.host,self.port))
         except IOError:
             pass
         LOGGER.info("Shutting down the webserver")
         self.thread.join()
+
+    def where_is(self, path):
+        return "http://%s:%d/%s" % (self.host, self.port, path)
 
 def main(argv=None):
     from optparse import OptionParser

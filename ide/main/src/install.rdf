@@ -4,7 +4,7 @@
     <Description about="urn:mozilla:install-manifest">
         <em:id>{66d128e0-4fbd-40f1-8c76-d9228a428549}</em:id>
         <em:name>Selenium IDE for OpKey v11</em:name>
-        <em:version>2.5.0</em:version>
+        <em:version>2.9.0</em:version>
         <em:creator>Shinya Kasatani</em:creator>
         <em:developer>Adam Goucher</em:developer>
         <em:developer>Samit Badle</em:developer>
@@ -21,7 +21,7 @@
           <Description>
             <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id> <!-- firefox -->
             <em:minVersion>3.6.*</em:minVersion>
-            <em:maxVersion>26.*</em:maxVersion>
+            <em:maxVersion>34.*</em:maxVersion>
           </Description>
         </em:targetApplication>
 
@@ -29,7 +29,7 @@
           <Description>
             <em:locale>fr-FR</em:locale>
             <em:name>Selenium IDE</em:name>
-            <em:description>Enregistrer, modifier et exécuter des tests Selenium</em:description>
+            <em:description>Enregistrer, modifier et exÃ©cuter des tests Selenium</em:description>
           </Description>
         </em:localized>
     </Description>

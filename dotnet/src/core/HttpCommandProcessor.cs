@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Software Freedom Conservancy.
+ * Copyright 2015 Software Freedom Conservancy.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -150,6 +150,7 @@ namespace Selenium
         /// <summary>
         /// Sets the extension Javascript to be used in the created session
         /// </summary>
+        /// <param name="extensionJs">The extension JavaScript to use.</param>
         public void SetExtensionJs(string extensionJs) 
         {
             this.extensionJs = extensionJs;

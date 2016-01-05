@@ -12,13 +12,13 @@ namespace OpenQA.Selenium.Support.PageObjects
     public class PageFactoryBrowserTest : DriverTestFixture
     {
         //TODO: Move these to a standalone class when more tests rely on the server being up
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void RunBeforeAnyTest()
         {
             EnvironmentManager.Instance.WebServer.Start();
         }
         
-        [TestFixtureTearDown]
+        [OneTimeTearDown]
         public void RunAfterAnyTests()
         {
             EnvironmentManager.Instance.CloseCurrentDriver();
@@ -90,6 +90,41 @@ namespace OpenQA.Selenium.Support.PageObjects
             Assert.AreEqual("Open new window", page.AllLinks[0].Text.Trim());
         }
 
+        [Test]
+        public void ShouldFindElementUsingSequence()
+        {
+            driver.Url = xhtmlTestPage;
+            var page = new PageFactoryBrowserTest.Page();
+            PageFactory.InitElements(driver, page);
+            Assert.AreEqual("I'm a child", page.NestedElement.Text.Trim());
+        }
+
+        [Test]
+        public void ShouldFindElementUsingAllFindBys()
+        {
+            driver.Url = xhtmlTestPage;
+            var page = new PageFactoryBrowserTest.Page();
+            PageFactory.InitElements(driver, page);
+            Assert.True(page.ByAllElement.Displayed);
+        }
+
+        [Test]
+        public void MixingFindBySequenceAndFindByAllShouldThrow()
+        {
+            driver.Url = xhtmlTestPage;
+            var page = new PageFactoryBrowserTest.InvalidAttributeCombinationPage();
+            Assert.Throws<ArgumentException>(() => PageFactory.InitElements(driver, page), "Cannot specify FindsBySequence and FindsByAll on the same member");
+        }
+
+        [Test]
+        public void FrameTest()
+        {
+            driver.Url = iframePage;
+            var page = new PageFactoryBrowserTest.IFramePage();
+            PageFactory.InitElements(driver, page);
+            driver.SwitchTo().Frame(page.Frame);
+        }
+
         #region Page classes for tests
         #pragma warning disable 649 //We set fields through reflection, so expect an always-null warning
 
@@ -97,6 +132,16 @@ namespace OpenQA.Selenium.Support.PageObjects
         {
             [FindsBy(How = How.Name, Using = "someForm")]
             public IWebElement formElement;
+
+            [FindsBySequence]
+            [FindsBy(How = How.Id, Using = "parent", Priority = 0)]
+            [FindsBy(How = How.Id, Using = "child", Priority = 1)]
+            public IWebElement NestedElement;
+
+            [FindsByAll]
+            [FindsBy(How = How.TagName, Using = "form", Priority = 0)]
+            [FindsBy(How = How.Name, Using = "someForm", Priority = 1)]
+            public IWebElement ByAllElement;
         }
 
         private class HoverPage
@@ -109,6 +154,21 @@ namespace OpenQA.Selenium.Support.PageObjects
         {
             [FindsBy(How=How.TagName, Using="a")]
             public IList<IWebElement> AllLinks;
+        }
+
+        private class InvalidAttributeCombinationPage
+        {
+            [FindsByAll]
+            [FindsBySequence]
+            [FindsBy(How = How.Id, Using = "parent", Priority = 0)]
+            [FindsBy(How = How.Id, Using = "child", Priority = 1)]
+            public IWebElement NotFound;
+        }
+
+        private class IFramePage
+        {
+            [FindsBy(How = How.Id, Using = "iframe1")]
+            public IWebElement Frame;
         }
 
         #pragma warning restore 649

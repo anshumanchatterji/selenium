@@ -1,9 +1,9 @@
 ﻿// <copyright file="Actions.cs" company="WebDriver Committers">
-// Copyright 2007-2011 WebDriver committers
-// Copyright 2007-2011 Google Inc.
-// Portions copyright 2011 Software Freedom Conservancy
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements. See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership. The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
@@ -68,7 +68,7 @@ namespace OpenQA.Selenium.Interactions
         /// </summary>
         /// <param name="theKey">The key to be sent.</param>
         /// <returns>A self-reference to this <see cref="Actions"/>.</returns>
-        /// <exception cref="ArgumentException">If the key sent is not is not one 
+        /// <exception cref="ArgumentException">If the key sent is not is not one
         /// of <see cref="Keys.Shift"/>, <see cref="Keys.Control"/>, or <see cref="Keys.Alt"/>.</exception>
         public Actions KeyDown(string theKey)
         {
@@ -81,7 +81,7 @@ namespace OpenQA.Selenium.Interactions
         /// <param name="element">The element to which to send the key command.</param>
         /// <param name="theKey">The key to be sent.</param>
         /// <returns>A self-reference to this <see cref="Actions"/>.</returns>
-        /// <exception cref="ArgumentException">If the key sent is not is not one 
+        /// <exception cref="ArgumentException">If the key sent is not is not one
         /// of <see cref="Keys.Shift"/>, <see cref="Keys.Control"/>, or <see cref="Keys.Alt"/>.</exception>
         public Actions KeyDown(IWebElement element, string theKey)
         {
@@ -95,7 +95,7 @@ namespace OpenQA.Selenium.Interactions
         /// </summary>
         /// <param name="theKey">The key to be sent.</param>
         /// <returns>A self-reference to this <see cref="Actions"/>.</returns>
-        /// <exception cref="ArgumentException">If the key sent is not is not one 
+        /// <exception cref="ArgumentException">If the key sent is not is not one
         /// of <see cref="Keys.Shift"/>, <see cref="Keys.Control"/>, or <see cref="Keys.Alt"/>.</exception>
         public Actions KeyUp(string theKey)
         {
@@ -108,7 +108,7 @@ namespace OpenQA.Selenium.Interactions
         /// <param name="element">The element to which to send the key command.</param>
         /// <param name="theKey">The key to be sent.</param>
         /// <returns>A self-reference to this <see cref="Actions"/>.</returns>
-        /// <exception cref="ArgumentException">If the key sent is not is not one 
+        /// <exception cref="ArgumentException">If the key sent is not is not one
         /// of <see cref="Keys.Shift"/>, <see cref="Keys.Control"/>, or <see cref="Keys.Alt"/>.</exception>
         public Actions KeyUp(IWebElement element, string theKey)
         {

@@ -1,20 +1,19 @@
-/*
-Copyright 2013 Selenium committers
-Copyright 2013 Software Freedom Conservancy
-Copyright 2013 Google, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 package org.openqa.selenium;
 
@@ -23,18 +22,16 @@ import static org.junit.Assert.assertEquals;
 import static org.openqa.selenium.remote.CapabilityType.PROXY;
 import static org.openqa.selenium.support.ui.ExpectedConditions.presenceOfElementLocated;
 import static org.openqa.selenium.support.ui.ExpectedConditions.titleIs;
-import static org.openqa.selenium.testing.Ignore.Driver.ANDROID;
 import static org.openqa.selenium.testing.Ignore.Driver.HTMLUNIT;
 import static org.openqa.selenium.testing.Ignore.Driver.IE;
-import static org.openqa.selenium.testing.Ignore.Driver.IPHONE;
-import static org.openqa.selenium.testing.Ignore.Driver.OPERA;
-import static org.openqa.selenium.testing.Ignore.Driver.OPERA_MOBILE;
+import static org.openqa.selenium.testing.Ignore.Driver.MARIONETTE;
 import static org.openqa.selenium.testing.Ignore.Driver.PHANTOMJS;
 import static org.openqa.selenium.testing.Ignore.Driver.SAFARI;
 import static org.openqa.selenium.testing.InProject.locate;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -53,6 +50,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.testing.Ignore;
 import org.openqa.selenium.testing.JUnit4TestBase;
 import org.openqa.selenium.testing.NeedsLocalEnvironment;
+import org.openqa.selenium.testing.NotYetImplemented;
 import org.openqa.selenium.testing.drivers.WebDriverBuilder;
 import org.webbitserver.HttpControl;
 import org.webbitserver.HttpHandler;
@@ -94,9 +92,9 @@ import java.util.concurrent.TimeUnit;
  * not be served by the same server.
  */
 @Ignore(
-    value = {ANDROID, HTMLUNIT, IPHONE, OPERA, OPERA_MOBILE, PHANTOMJS, SAFARI},
-    reason = "Android/HtmlUnit/Iphone/Opera/PhantomJS - not tested, " +
-             "Opera mobile/Safari - not implemented")
+    value = {PHANTOMJS, SAFARI},
+    reason = "Opera/PhantomJS - not tested, " +
+             "Safari - not implemented")
 public class ReferrerTest extends JUnit4TestBase {
 
   private static String page1;
@@ -121,6 +119,7 @@ public class ReferrerTest extends JUnit4TestBase {
    * does not have a proxy configured.
    */
   @Test
+  @NotYetImplemented(HTMLUNIT)
   @NeedsLocalEnvironment
   public void basicHistoryNavigationWithoutAProxy() {
     testServer1.start();
@@ -144,6 +143,7 @@ public class ReferrerTest extends JUnit4TestBase {
    * Tests navigation across multiple domains when the browser does not have a proxy configured.
    */
   @Test
+  @NotYetImplemented(HTMLUNIT)
   @NeedsLocalEnvironment
   public void crossDomainHistoryNavigationWithoutAProxy() {
 
@@ -174,6 +174,7 @@ public class ReferrerTest extends JUnit4TestBase {
    * configured to use a proxy that permits direct access to that domain.
    */
   @Test
+  @NotYetImplemented(HTMLUNIT)
   @NeedsLocalEnvironment
   public void basicHistoryNavigationWithADirectProxy() {
     testServer1.start();
@@ -203,6 +204,7 @@ public class ReferrerTest extends JUnit4TestBase {
    * permits direct access to those domains.
    */
   @Test
+  @NotYetImplemented(HTMLUNIT)
   @NeedsLocalEnvironment
   public void crossDomainHistoryNavigationWithADirectProxy() {
     testServer1.start();
@@ -236,6 +238,8 @@ public class ReferrerTest extends JUnit4TestBase {
    * Tests navigation across multiple domains when the browser is configured to use a proxy that
    * redirects the second domain to another host.
    */
+  @Ignore(MARIONETTE)
+  @NotYetImplemented(HTMLUNIT)
   @Test
   @NeedsLocalEnvironment
   public void crossDomainHistoryNavigationWithAProxiedHost() {
@@ -276,6 +280,8 @@ public class ReferrerTest extends JUnit4TestBase {
    * intercepts requests to a specific host (www.example.com) - all other requests are permitted
    * to connect directly to the target server.
    */
+  @Ignore(MARIONETTE)
+  @NotYetImplemented(HTMLUNIT)
   @Test
   @NeedsLocalEnvironment
   public void crossDomainHistoryNavigationWhenProxyInterceptsHostRequests() {
@@ -314,9 +320,10 @@ public class ReferrerTest extends JUnit4TestBase {
    * intercepts requests for page 2.
    */
   @Ignore(
-      value = IE,
+      value = {IE, MARIONETTE},
       reason = "IEDriver does not disable automatic proxy caching, causing this test to fail.",
       issues = 6629)
+  @NotYetImplemented(HTMLUNIT)
   @Test
   @NeedsLocalEnvironment
   public void navigationWhenProxyInterceptsASpecificUrl() {
@@ -437,7 +444,7 @@ public class ReferrerTest extends JUnit4TestBase {
     }
 
     HostAndPort getHostAndPort() {
-      String host = Objects.firstNonNull(System.getenv("HOSTNAME"), "localhost");
+      String host = MoreObjects.firstNonNull(System.getenv("HOSTNAME"), "localhost");
       return HostAndPort.fromParts(host, server.getPort());
     }
 

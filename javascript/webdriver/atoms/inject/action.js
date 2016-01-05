@@ -1,17 +1,19 @@
-// Copyright 2011 WebDriver committers
-// Copyright 2011 Google Inc.
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 /**
  * @fileoverview Ready to inject atoms for manipulating the DOM.
@@ -134,6 +136,90 @@ webdriver.atoms.inject.action.sendKeysToActiveElement = function(
   return webdriver.atoms.inject.action.executeActionFunction_(
       webdriver.atoms.inputs.sendKeys,
       [null, keys, opt_keyboardState, persistModifiers], opt_window);
+};
+
+/**
+  * Moves the mouse to a specific element and/or coordinate location.
+  *
+  * @param {?bot.inject.JsonElement} element The element to move the mouse
+  *     relative to, or {@code null} to use the mouse's current position.
+  * @param {?number} xOffset A horizontal offset, relative to the left edge of
+  *     the given element, or the mouse's current position if no element is
+  *     specified.
+  * @param {?number} yOffset A vertical offset, relative to the top edge of
+  *     the given element, or the mouse's current position if no element
+  *     is specified.
+  * @param {webdriver.atoms.inject.action.JsonMouseState=} opt_mouseState The
+  *     current state of the mouse.
+  * @param {bot.inject.JsonWindow=} opt_window The window context for
+  *     the execution of the function.
+  * @return {string} A stringified {@link bot.response.ResponseObject}. The
+  *     mouse's new state, as a
+  *     {@link webdriver.atoms.inject.action.JsonMouseState} will be included
+  *     as the response value.
+  */
+webdriver.atoms.inject.action.mouseMove = function(
+    element, xOffset, yOffset, opt_mouseState, opt_window) {
+  return webdriver.atoms.inject.action.executeActionFunction_(
+      webdriver.atoms.inputs.mouseMove,
+      [element, xOffset, yOffset, opt_mouseState], opt_window);
+};
+
+
+/**
+ * Presses the primary mouse button at the current location.
+ *
+ * @param {webdriver.atoms.inject.action.JsonMouseState=} opt_mouseState The
+ *     current state of the mouse.
+ * @param {bot.inject.JsonWindow=} opt_window The window context for
+ *     the execution of the function.
+ * @return {string} A stringified {@link bot.response.ResponseObject}. The
+ *     mouse's new state, as a
+ *     {@link webdriver.atoms.inject.action.JsonMouseState} will be included
+ *     as the response value.
+ */
+webdriver.atoms.inject.action.mouseButtonDown = function(opt_mouseState, opt_window) {
+  return webdriver.atoms.inject.action.executeActionFunction_(
+      webdriver.atoms.inputs.mouseButtonDown,
+      [opt_mouseState], opt_window);
+};
+
+
+/**
+ * Releases the primary mouse button at the current location.
+ *
+ * @param {webdriver.atoms.inject.action.JsonMouseState=} opt_mouseState The
+ *     current state of the mouse.
+ * @param {bot.inject.JsonWindow=} opt_window The window context for
+ *     the execution of the function.
+ * @return {string} A stringified {@link bot.response.ResponseObject}. The
+ *     mouse's new state, as a
+ *     {@link webdriver.atoms.inject.action.JsonMouseState} will be included
+ *     as the response value.
+ */
+webdriver.atoms.inject.action.mouseButtonUp = function(opt_mouseState, opt_window) {
+  return webdriver.atoms.inject.action.executeActionFunction_(
+      webdriver.atoms.inputs.mouseButtonUp,
+      [opt_mouseState], opt_window);
+};
+
+/**
+* Double-clicks the primary mouse button.
+*
+* @param {webdriver.atoms.inject.action.JsonMouseState=} opt_mouseState The
+*     current state of the mouse.
+* @param {bot.inject.JsonWindow=} opt_window The window context for
+*     the execution of the function.
+* @return {string} A stringified {@link bot.response.ResponseObject}. The
+*     mouse's new state, as a
+*     {@link webdriver.atoms.inject.action.JsonMouseState} will be included
+*     as the response value.
+*/
+webdriver.atoms.inject.action.doubleClick = function (
+    opt_mouseState, opt_window) {
+    return webdriver.atoms.inject.action.executeActionFunction_(
+      webdriver.atoms.inputs.doubleClick,
+      [opt_mouseState], opt_window);
 };
 
 

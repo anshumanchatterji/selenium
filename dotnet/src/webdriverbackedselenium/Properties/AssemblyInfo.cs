@@ -29,7 +29,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Selenium Committers")]
 [assembly: AssemblyProduct("Selenium")]
-[assembly: AssemblyCopyright("Copyright © Software Freedom Conservancy 2012")]
+[assembly: AssemblyCopyright("Copyright © Software Freedom Conservancy 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -50,5 +50,5 @@ using System.Runtime.InteropServices;
 //      Minor Version 
 //      Build Number
 //      Revision
-[assembly: AssemblyVersion("2.39.0.0")]
-[assembly: AssemblyFileVersion("2.39.0.0")]
+[assembly: AssemblyVersion("2.48.2.0")]
+[assembly: AssemblyFileVersion("2.48.2.0")]

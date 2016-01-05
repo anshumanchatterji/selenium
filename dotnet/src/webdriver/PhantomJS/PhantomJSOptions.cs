@@ -1,9 +1,9 @@
 ﻿// <copyright file="PhantomJSOptions.cs" company="WebDriver Committers">
-// Copyright 2007-2012 WebDriver committers
-// Copyright 2007-2012 Google Inc.
-// Portions copyright 2012 Software Freedom Conservancy
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements. See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership. The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
@@ -48,13 +48,13 @@ namespace OpenQA.Selenium.PhantomJS
         private Dictionary<string, object> additionalCapabilities = new Dictionary<string, object>();
 
         /// <summary>
-        /// Provides a means to add additional capabilities not yet added as type safe options 
+        /// Provides a means to add additional capabilities not yet added as type safe options
         /// for the PhantomJS driver.
         /// </summary>
         /// <param name="capabilityName">The name of the capability to add.</param>
         /// <param name="capabilityValue">The value of the capability to add.</param>
         /// <exception cref="ArgumentException">
-        /// thrown when attempting to add a capability for which there is already a type safe option, or 
+        /// thrown when attempting to add a capability for which there is already a type safe option, or
         /// when <paramref name="capabilityName"/> is <see langword="null"/> or the empty string.
         /// </exception>
         /// <remarks>Calling <see cref="AddAdditionalCapability"/> where <paramref name="capabilityName"/>

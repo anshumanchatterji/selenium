@@ -1,18 +1,19 @@
-/*
-Copyright 2007-2010 Selenium committers
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
- */
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 package org.openqa.selenium.remote;
 
@@ -22,7 +23,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.openqa.selenium.remote.CapabilityType.SUPPORTS_BROWSER_CONNECTION;
+import static org.mockito.Mockito.mock;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -34,7 +35,6 @@ import org.openqa.selenium.HasCapabilities;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Rotatable;
 import org.openqa.selenium.ScreenOrientation;
-import org.openqa.selenium.StubDriver;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -48,7 +48,7 @@ public abstract class BaseAugmenterTest {
 
   @Test
   public void shouldReturnANormalWebDriverUntouched() {
-    WebDriver driver = new StubDriver();
+    WebDriver driver = mock(WebDriver.class);
 
     WebDriver returned = getAugmenter().augment(driver);
 
@@ -56,38 +56,31 @@ public abstract class BaseAugmenterTest {
   }
 
   @Test
-  public void shouldLeaveARemoteWebDriverWhichCannotTakeSnapshotsAlone() throws Exception {
+  public void shouldAddInterfaceFromCapabilityIfNecessary() {
     DesiredCapabilities caps = new DesiredCapabilities();
+    caps.setCapability("magic.numbers", true);
     WebDriver driver = new RemoteWebDriver(new StubExecutor(caps), caps);
 
-    WebDriver returned = getAugmenter().augment(driver);
-    System.out.println("This is the returned webdriver " + returned);
-    assertSame(driver, returned);
-    assertFalse(returned instanceof TakesScreenshot);
-  }
-
-  @Test
-  public void shouldAddTheTakesSnapshotInterfaceIfNecessary() {
-    DesiredCapabilities caps = new DesiredCapabilities();
-    caps.setCapability(CapabilityType.TAKES_SCREENSHOT, true);
-    WebDriver driver = new RemoteWebDriver(new StubExecutor(caps), caps);
-
-    WebDriver returned = getAugmenter().augment(driver);
+    BaseAugmenter augmenter = getAugmenter();
+    augmenter.addDriverAugmentation("magic.numbers", new AddsMagicNumberHolder());
+    WebDriver returned = augmenter.augment(driver);
 
     assertNotSame(driver, returned);
     assertTrue(returned instanceof TakesScreenshot);
   }
 
   @Test
-  public void shouldNotAddTheTakesSnapshotInterfaceWhenBooleanValueIsFalse() {
+  public void shouldNotAddInterfaceWhenBooleanValueForItIsFalse() {
     DesiredCapabilities caps = new DesiredCapabilities();
-    caps.setCapability(CapabilityType.TAKES_SCREENSHOT, false);
+    caps.setCapability("magic.numbers", false);
     WebDriver driver = new RemoteWebDriver(new StubExecutor(caps), caps);
 
-    WebDriver returned = getAugmenter().augment(driver);
+    BaseAugmenter augmenter = getAugmenter();
+    augmenter.addDriverAugmentation("magic.numbers", new AddsMagicNumberHolder());
+    WebDriver returned = augmenter.augment(driver);
 
     assertSame(driver, returned);
-    assertFalse(returned instanceof TakesScreenshot);
+    assertFalse(returned instanceof MagicNumberHolder);
   }
 
   @Test
@@ -121,12 +114,14 @@ public abstract class BaseAugmenterTest {
   @Test
   public void shouldDelegateUnmatchedMethodCallsToDriverImplementation() {
     DesiredCapabilities caps = new DesiredCapabilities();
-    caps.setCapability(CapabilityType.TAKES_SCREENSHOT, true);
+    caps.setCapability("magic.numbers", true);
     StubExecutor stubExecutor = new StubExecutor(caps);
     stubExecutor.expect(DriverCommand.GET_TITLE, new HashMap<String, Object>(), "Title");
     WebDriver driver = new RemoteWebDriver(stubExecutor, caps);
 
-    WebDriver returned = getAugmenter().augment(driver);
+    BaseAugmenter augmenter = getAugmenter();
+    augmenter.addDriverAugmentation("magic.numbers", new AddsMagicNumberHolder());
+    WebDriver returned = augmenter.augment(driver);
 
     assertEquals("Title", returned.getTitle());
   }
@@ -135,12 +130,14 @@ public abstract class BaseAugmenterTest {
   public void proxyShouldNotAppearInStackTraces() {
     final DesiredCapabilities caps = new DesiredCapabilities();
     // This will force the class to be enhanced
-    caps.setCapability(CapabilityType.TAKES_SCREENSHOT, true);
+    caps.setCapability("magic.numbers", true);
 
     DetonatingDriver driver = new DetonatingDriver();
     driver.setCapabilities(caps);
 
-    WebDriver returned = getAugmenter().augment(driver);
+    BaseAugmenter augmenter = getAugmenter();
+    augmenter.addDriverAugmentation("magic.numbers", new AddsMagicNumberHolder());
+    WebDriver returned = augmenter.augment(driver);
 
     returned.findElement(By.id("ignored"));
   }
@@ -222,7 +219,7 @@ public abstract class BaseAugmenterTest {
   public void shouldBeAbleToAugmentMultipleTimes() {
     DesiredCapabilities caps = new DesiredCapabilities();
     caps.setCapability("canRotate", true);
-    caps.setCapability("reallyTakesScreenshot", true);
+    caps.setCapability("magic.numbers", true);
 
     StubExecutor stubExecutor = new StubExecutor(caps);
     stubExecutor.expect(DriverCommand.GET_SCREEN_ORIENTATION,
@@ -236,15 +233,15 @@ public abstract class BaseAugmenterTest {
     WebDriver augmented = augmenter.augment(driver);
     assertNotSame(augmented, driver);
     assertTrue(augmented instanceof Rotatable);
-    assertFalse(augmented instanceof TakesScreenshot);
+    assertFalse(augmented instanceof MagicNumberHolder);
 
     augmenter = getAugmenter();
-    augmenter.addDriverAugmentation("reallyTakesScreenshot", new AddTakesScreenshot());
+    augmenter.addDriverAugmentation("magic.numbers", new AddsMagicNumberHolder());
 
     WebDriver augmentedAgain = augmenter.augment(augmented);
     assertNotSame(augmentedAgain, augmented);
     assertTrue(augmentedAgain instanceof Rotatable);
-    assertTrue(augmentedAgain instanceof TakesScreenshot);
+    assertTrue(augmentedAgain instanceof MagicNumberHolder);
 
     ((Rotatable) augmentedAgain).getOrientation();  // Should not throw.
 
@@ -329,9 +326,7 @@ public abstract class BaseAugmenterTest {
 
     @Override
     public Capabilities getCapabilities() {
-      DesiredCapabilities caps = DesiredCapabilities.firefox();
-      caps.setCapability(SUPPORTS_BROWSER_CONNECTION, true);
-      return caps;
+      return DesiredCapabilities.firefox();
     }
 
     @Override
@@ -355,4 +350,22 @@ public abstract class BaseAugmenterTest {
   }
 
   public abstract BaseAugmenter getAugmenter();
+
+  private static class AddsMagicNumberHolder implements AugmenterProvider {
+    @Override
+    public Class<?> getDescribedInterface() {
+      return MagicNumberHolder.class;
+    }
+
+    @Override
+    public InterfaceImplementation getImplementation(Object value) {
+      return new InterfaceImplementation() {
+        @Override
+        public Object invoke(ExecuteMethod executeMethod, Object self, Method method,
+                             Object... args) {
+          return null;
+        }
+      };
+    }
+  }
 }

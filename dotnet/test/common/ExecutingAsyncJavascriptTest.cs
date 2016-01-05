@@ -118,19 +118,17 @@ namespace OpenQA.Selenium
         }
 
         [Test]
-        [ExpectedException(typeof(WebDriverTimeoutException))]
         public void ShouldTimeoutIfScriptDoesNotInvokeCallback()
         {
             driver.Url = ajaxyPage;
-            executor.ExecuteAsyncScript("return 1 + 2;");
+            Assert.Throws<WebDriverTimeoutException>(() => executor.ExecuteAsyncScript("return 1 + 2;"));
         }
 
         [Test]
-        [ExpectedException(typeof(WebDriverTimeoutException))]
         public void ShouldTimeoutIfScriptDoesNotInvokeCallbackWithAZeroTimeout()
         {
             driver.Url = ajaxyPage;
-            executor.ExecuteAsyncScript("window.setTimeout(function() {}, 0);");
+            Assert.Throws<WebDriverTimeoutException>(() => executor.ExecuteAsyncScript("window.setTimeout(function() {}, 0);"));
         }
 
         [Test]
@@ -143,31 +141,28 @@ namespace OpenQA.Selenium
         }
 
         [Test]
-        [ExpectedException(typeof(WebDriverTimeoutException))]
         public void ShouldTimeoutIfScriptDoesNotInvokeCallbackWithLongTimeout()
         {
             driver.Manage().Timeouts().SetScriptTimeout(TimeSpan.FromMilliseconds(500));
             driver.Url = ajaxyPage;
-            executor.ExecuteAsyncScript(
+            Assert.Throws<WebDriverTimeoutException>(() => executor.ExecuteAsyncScript(
                 "var callback = arguments[arguments.length - 1];" +
-                "window.setTimeout(callback, 1500);");
+                "window.setTimeout(callback, 1500);"));
         }
 
         [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
         public void ShouldDetectPageLoadsWhileWaitingOnAnAsyncScriptAndReturnAnError()
         {
             driver.Url = ajaxyPage;
             driver.Manage().Timeouts().SetScriptTimeout(TimeSpan.FromMilliseconds(100));
-            executor.ExecuteAsyncScript("window.location = '" + dynamicPage + "';");
+            Assert.Throws<InvalidOperationException>(() => executor.ExecuteAsyncScript("window.location = '" + dynamicPage + "';"));
         }
 
         [Test]
-        [ExpectedException(typeof(InvalidOperationException))]
         public void ShouldCatchErrorsWhenExecutingInitialScript()
         {
             driver.Url = ajaxyPage;
-            executor.ExecuteAsyncScript("throw Error('you should catch this!');");
+            Assert.Throws<InvalidOperationException>(() => executor.ExecuteAsyncScript("throw Error('you should catch this!');"));
         }
 
         [Test]
@@ -266,6 +261,7 @@ namespace OpenQA.Selenium
         [IgnoreBrowser(Browser.IE, "Does not handle async alerts")]
         [IgnoreBrowser(Browser.IPhone, "Does not handle async alerts")]
         [IgnoreBrowser(Browser.Opera, "Does not handle async alerts")]
+        [IgnoreBrowser(Browser.Safari, "Does not handle async alerts")]
         public void ThrowsIfAlertHappensDuringScript()
         {
             driver.Url = slowLoadingAlertPage;
@@ -290,6 +286,7 @@ namespace OpenQA.Selenium
         [IgnoreBrowser(Browser.IE, "Does not handle async alerts")]
         [IgnoreBrowser(Browser.IPhone, "Does not handle async alerts")]
         [IgnoreBrowser(Browser.Opera, "Does not handle async alerts")]
+        [IgnoreBrowser(Browser.Safari, "Does not handle async alerts")]
         public void ThrowsIfScriptTriggersAlertWhichTimesOut()
         {
             driver.Url = simpleTestPage;

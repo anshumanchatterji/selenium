@@ -1,19 +1,19 @@
-/*
-Copyright 2012 Selenium committers
-Copyright 2012 Software Freedom Conservancy
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 package org.openqa.selenium;
 
@@ -22,20 +22,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.openqa.selenium.remote.CapabilityType.PROXY;
-import static org.openqa.selenium.testing.Ignore.Driver.ANDROID;
 import static org.openqa.selenium.testing.Ignore.Driver.CHROME;
 import static org.openqa.selenium.testing.Ignore.Driver.HTMLUNIT;
 import static org.openqa.selenium.testing.Ignore.Driver.IE;
-import static org.openqa.selenium.testing.Ignore.Driver.IPHONE;
 import static org.openqa.selenium.testing.Ignore.Driver.MARIONETTE;
-import static org.openqa.selenium.testing.Ignore.Driver.OPERA;
-import static org.openqa.selenium.testing.Ignore.Driver.OPERA_MOBILE;
 import static org.openqa.selenium.testing.Ignore.Driver.PHANTOMJS;
+import static org.openqa.selenium.testing.Ignore.Driver.REMOTE;
 import static org.openqa.selenium.testing.Ignore.Driver.SAFARI;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.HttpHeaders;
@@ -50,6 +47,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.testing.Ignore;
 import org.openqa.selenium.testing.JUnit4TestBase;
 import org.openqa.selenium.testing.NeedsLocalEnvironment;
+import org.openqa.selenium.testing.NotYetImplemented;
 import org.openqa.selenium.testing.ProxyServer;
 import org.openqa.selenium.testing.drivers.WebDriverBuilder;
 import org.webbitserver.HttpControl;
@@ -87,9 +85,8 @@ public class ProxySettingTest extends JUnit4TestBase {
     }
   }
 
-  @Ignore(value = {ANDROID, IPHONE, OPERA_MOBILE, PHANTOMJS, SAFARI},
-          reason = "Android/Iphone/PhantomJS - not tested,"
-                   + "Opera mobile/Safari - not implemented")
+  @Ignore(value = {PHANTOMJS, SAFARI},
+          reason = "PhantomJS - not tested, Safari - not implemented")
   @NeedsLocalEnvironment
   @Test
   public void canConfigureManualHttpProxy() {
@@ -104,9 +101,8 @@ public class ProxySettingTest extends JUnit4TestBase {
     assertTrue("Proxy should have been called", proxyServer.hasBeenCalled("simpleTest.html"));
   }
 
-  @Ignore(value = {ANDROID, IPHONE, OPERA_MOBILE, PHANTOMJS, SAFARI, HTMLUNIT},
-          reason = "Android/Iphone/PhantomJS - not tested,"
-                   + "Opera mobile/Safari - not implemented")
+  @Ignore(value = {PHANTOMJS, SAFARI, HTMLUNIT},
+          reason = "PhantomJS - not tested, Safari - not implemented")
   @NeedsLocalEnvironment
   @Test
   public void canConfigureProxyThroughPACFile() {
@@ -131,9 +127,8 @@ public class ProxySettingTest extends JUnit4TestBase {
         "Hello, world!", driver.findElement(By.tagName("h3")).getText());
   }
 
-  @Ignore(value = {ANDROID, IPHONE, OPERA_MOBILE, PHANTOMJS, SAFARI, HTMLUNIT},
-          reason = "Android/Iphone/PhantomJS - not tested,"
-                   + "Opera mobile/Safari - not implemented")
+  @Ignore(value = {PHANTOMJS, SAFARI, HTMLUNIT},
+          reason = "PhantomJS - not tested, Safari - not implemented")
   @NeedsLocalEnvironment
   @Test
   public void canUsePACThatOnlyProxiesCertainHosts() throws Exception {
@@ -167,7 +162,7 @@ public class ProxySettingTest extends JUnit4TestBase {
         "Heading", driver.findElement(By.tagName("h1")).getText());
   }
 
-  @Ignore({ANDROID, CHROME, HTMLUNIT, IE, IPHONE, OPERA, OPERA_MOBILE, PHANTOMJS, SAFARI})
+  @Ignore({CHROME, IE, PHANTOMJS, REMOTE, SAFARI})
   @NeedsLocalEnvironment
   @Test
   public void canConfigureProxyWithRequiredCapability() {
@@ -182,7 +177,7 @@ public class ProxySettingTest extends JUnit4TestBase {
     assertTrue("Proxy should have been called", proxyServer.hasBeenCalled("simpleTest.html"));
   }
 
-  @Ignore({ANDROID, CHROME, HTMLUNIT, IE, IPHONE, OPERA, OPERA_MOBILE, PHANTOMJS, SAFARI})
+  @Ignore({CHROME, IE, PHANTOMJS, REMOTE, SAFARI})
   @NeedsLocalEnvironment
   @Test
   public void requiredProxyCapabilityShouldHavePriority() {
@@ -282,7 +277,7 @@ public class ProxySettingTest extends JUnit4TestBase {
   }
 
   private static HostAndPort getHostAndPort(WebServer server) {
-    String host = Objects.firstNonNull(System.getenv("HOSTNAME"), "localhost");
+    String host = MoreObjects.firstNonNull(System.getenv("HOSTNAME"), "localhost");
     return HostAndPort.fromParts(host, server.getPort());
   }
 }

@@ -1,9 +1,9 @@
 ﻿// <copyright file="Proxy.cs" company="WebDriver Committers">
-// Copyright 2007-2011 WebDriver committers
-// Copyright 2007-2011 Google Inc.
-// Portions copyright 2011 Software Freedom Conservancy
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements. See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership. The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
@@ -63,7 +63,7 @@ namespace OpenQA.Selenium
         /// </summary>
         Unspecified
     }
-    
+
     /// <summary>
     /// Describes proxy settings to be used with a driver instance.
     /// </summary>
@@ -109,22 +109,22 @@ namespace OpenQA.Selenium
             {
                 this.FtpProxy = settings["ftpProxy"].ToString();
             }
-            
+
             if (settings.ContainsKey("httpProxy"))
             {
                 this.HttpProxy = settings["httpProxy"].ToString();
             }
-            
+
             if (settings.ContainsKey("noProxy"))
             {
                 this.NoProxy = settings["noProxy"].ToString();
             }
-            
+
             if (settings.ContainsKey("proxyAutoconfigUrl"))
             {
                 this.ProxyAutoConfigUrl = settings["proxyAutoconfigUrl"].ToString();
             }
-            
+
             if (settings.ContainsKey("sslProxy"))
             {
                 this.SslProxy = settings["sslProxy"].ToString();
@@ -157,9 +157,9 @@ namespace OpenQA.Selenium
         [JsonIgnore]
         public ProxyKind Kind
         {
-            get 
+            get
             {
-                return this.proxyKind; 
+                return this.proxyKind;
             }
 
             set

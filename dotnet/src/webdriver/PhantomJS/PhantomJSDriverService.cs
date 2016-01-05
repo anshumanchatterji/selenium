@@ -1,9 +1,9 @@
 ﻿// <copyright file="PhantomJSDriverService.cs" company="WebDriver Committers">
-// Copyright 2007-2012 WebDriver committers
-// Copyright 2007-2012 Google Inc.
-// Portions copyright 2012 Software Freedom Conservancy
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements. See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership. The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
@@ -35,12 +35,14 @@ namespace OpenQA.Selenium.PhantomJS
     [JsonObject(MemberSerialization.OptIn)]
     public sealed class PhantomJSDriverService : DriverService
     {
-        private const string PhantomJSDriverServiceFileName = "PhantomJS.exe";
+        private static readonly string PhantomJSDriverServiceFileName = PlatformSpecificDriverServiceFileName;
         private static readonly Uri PhantomJSDownloadUrl = new Uri("http://phantomjs.org/download.html");
 
         private List<string> additionalArguments = new List<string>();
         private string ghostDriverPath = string.Empty;
         private string logFile = string.Empty;
+        private string address = string.Empty;
+        private string gridHubUrl = string.Empty;
 
         /// <summary>
         /// Prevents a default instance of the <see cref="PhantomJSDriverService"/> class from being created.
@@ -56,7 +58,7 @@ namespace OpenQA.Selenium.PhantomJS
         }
 
         /// <summary>
-        /// Initializes a new instance of the PhantomJSDriverService class.
+        /// Initializes a new instance of the <see cref="PhantomJSDriverService"/> class.
         /// </summary>
         /// <param name="executablePath">The full path to the PhantomJS executable.</param>
         /// <param name="executableFileName">The file name of the PhantomJS executable.</param>
@@ -67,7 +69,7 @@ namespace OpenQA.Selenium.PhantomJS
             this.InitializeProperties();
         }
 
-        // Note: To add support for new PhantomJS command-line arguments, simply add another auto-property 
+        // Note: To add support for new PhantomJS command-line arguments, simply add another auto-property
         // with appropriate [JsonProperty] and [DefaultValue] attributes.
 
         /// <summary>
@@ -156,6 +158,13 @@ namespace OpenQA.Selenium.PhantomJS
         public string ProxyType { get; set; }
 
         /// <summary>
+        /// Gets or sets the proxy authentication info (e.g. username:password).
+        /// </summary>
+        [JsonProperty("proxyAuth", NullValueHandling = NullValueHandling.Ignore)]
+        [CommandLineArgumentName("proxy-auth")]
+        public string ProxyAuthentication { get; set; }
+
+        /// <summary>
         /// Gets or sets the encoding used for the starting script (default is "utf8").
         /// </summary>
         [JsonProperty("scriptEncoding", NullValueHandling = NullValueHandling.Ignore, DefaultValueHandling = DefaultValueHandling.Ignore)]
@@ -170,6 +179,13 @@ namespace OpenQA.Selenium.PhantomJS
         [DefaultValue("SSLv3")]
         [CommandLineArgumentName("ssl-protocol")]
         public string SslProtocol { get; set; }
+
+        /// <summary>
+        /// Gets or sets the location for custom CA certificates (if none set, uses system default).
+        /// </summary>
+        [JsonProperty("sslCertificatesPath", NullValueHandling = NullValueHandling.Ignore)]
+        [CommandLineArgumentName("ssl-certificates-path")]
+        public string SslCertificatesPath { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether web security is enabled and forbids cross-domain XHR (default is yes).
@@ -192,6 +208,27 @@ namespace OpenQA.Selenium.PhantomJS
         }
 
         /// <summary>
+        /// Gets or sets the IP address to use when starting the GhostDriver implementation
+        /// embedded in PhantomJS.
+        /// </summary>
+        [JsonIgnore]
+        public string IPAddress
+        {
+            get { return this.address; }
+            set { this.address = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the URL of a Selenium Grid hub with which this PhantomJS instance should register.
+        /// </summary>
+        [JsonIgnore]
+        public string GridHubUrl
+        {
+            get { return this.gridHubUrl; }
+            set { this.gridHubUrl = value; }
+        }
+
+        /// <summary>
         /// Gets or sets the location of the log file to which PhantomJS will write log
         /// output. If this value is <see langword="null"/> or an empty string, the log
         /// output will be written to the console window.
@@ -208,7 +245,7 @@ namespace OpenQA.Selenium.PhantomJS
         [JsonIgnore]
         public ReadOnlyCollection<string> AdditionalArguments
         {
-            // We don't want the arguments to be serialized to the JSON-based configuration that could be 
+            // We don't want the arguments to be serialized to the JSON-based configuration that could be
             // subsequently passed to the PhantomJS.exe process using the --config=<path> argument.
             // They're only used to provide a facility to add arguments that are not yet explicitly supported by this API
             // for the launching of the 'PhantomJS.exe' service process.
@@ -218,7 +255,7 @@ namespace OpenQA.Selenium.PhantomJS
         /// <summary>
         /// Gets or sets the path to the JSON configuration file (in lieu of providing any other parameters).
         /// </summary>
-        /// <remarks>If a <see cref="PhantomJSDriverService"/> instance is serialized to JSON, it can be saved to a 
+        /// <remarks>If a <see cref="PhantomJSDriverService"/> instance is serialized to JSON, it can be saved to a
         /// file and used as a JSON configuration source for the PhantomJS.exe process.</remarks>
         /// <example>
         /// <code>
@@ -237,19 +274,19 @@ namespace OpenQA.Selenium.PhantomJS
         ///     SslProtocol = "sslv2",
         ///     WebSecurity = true,
         /// };
-        /// 
+        ///
         /// string json = configOptions.ToJson();
-        /// 
+        ///
         /// File.WriteAllText(@"C:\temp\myconfig.json", json);
-        /// 
+        ///
         /// var driverService = PhantomJSDriver.CreateDefaultService();
         /// driverService.ConfigFile = @"C:\temp\myconfig.json";
-        /// 
+        ///
         /// var driver = new PhantomJSDriver(driverService);  // Launches PhantomJS.exe using JSON configuration file.
         /// </code>
         /// </example>
         [JsonIgnore]
-        public string ConfigFile { get; set; }  // Not serialized because it is used to pass the JSON configuration path to PhantomJS.exe, and should not appear in the JSON configuration.
+        public string ConfigFile { get; set; } // Not serialized because it is used to pass the JSON configuration path to PhantomJS.exe, and should not appear in the JSON configuration.
 
         /// <summary>
         /// Gets the command-line arguments for the driver service.
@@ -287,10 +324,23 @@ namespace OpenQA.Selenium.PhantomJS
 
                 if (string.IsNullOrEmpty(this.ghostDriverPath))
                 {
-                    argsBuilder.AppendFormat(CultureInfo.InvariantCulture, " --webdriver={0}", this.Port);
+                    if (string.IsNullOrEmpty(this.address))
+                    {
+                        argsBuilder.AppendFormat(CultureInfo.InvariantCulture, " --webdriver={0}", this.Port);
+                    }
+                    else
+                    {
+                        argsBuilder.AppendFormat(CultureInfo.InvariantCulture, " --webdriver={0}:{1}", this.address, this.Port);
+                    }
+
                     if (!string.IsNullOrEmpty(this.logFile))
                     {
-                        argsBuilder.AppendFormat(" --webdriver-logfile={0}", this.logFile);
+                        argsBuilder.AppendFormat(" --webdriver-logfile=\"{0}\"", this.logFile);
+                    }
+
+                    if (!string.IsNullOrEmpty(this.gridHubUrl))
+                    {
+                        argsBuilder.AppendFormat(CultureInfo.InvariantCulture, " --webdriver-selenium-grid-hub={0}", this.gridHubUrl);
                     }
                 }
                 else
@@ -299,7 +349,7 @@ namespace OpenQA.Selenium.PhantomJS
                     argsBuilder.AppendFormat(CultureInfo.InvariantCulture, " --port={0}", this.Port);
                     if (!string.IsNullOrEmpty(this.logFile))
                     {
-                        argsBuilder.AppendFormat(" --logFile={0}", this.logFile);
+                        argsBuilder.AppendFormat(" --logFile=\"{0}\"", this.logFile);
                     }
                 }
 
@@ -315,6 +365,14 @@ namespace OpenQA.Selenium.PhantomJS
                 }
 
                 return argsBuilder.ToString();
+            }
+        }
+
+        private static string PlatformSpecificDriverServiceFileName
+        {
+            get
+            {
+                return Platform.CurrentPlatform.IsPlatformType(PlatformType.Unix) ? "phantomjs" : "PhantomJS.exe";
             }
         }
 

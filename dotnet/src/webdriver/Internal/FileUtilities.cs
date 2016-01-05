@@ -1,9 +1,9 @@
 ﻿// <copyright file="FileUtilities.cs" company="WebDriver Committers">
-// Copyright 2007-2011 WebDriver committers
-// Copyright 2007-2011 Google Inc.
-// Portions copyright 2011 Software Freedom Conservancy
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements. See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership. The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
@@ -30,8 +30,6 @@ namespace OpenQA.Selenium.Internal
     /// </summary>
     internal static class FileUtilities
     {
-        private static Random tempFileGenerator = new Random();
-
         /// <summary>
         /// Recursively copies a directory.
         /// </summary>
@@ -164,7 +162,7 @@ namespace OpenQA.Selenium.Internal
             Assembly executingAssembly = Assembly.GetExecutingAssembly();
             string currentDirectory = Path.GetDirectoryName(executingAssembly.Location);
 
-            // If we're shadow copying, get the directory from the codebase instead 
+            // If we're shadow copying, get the directory from the codebase instead
             if (AppDomain.CurrentDomain.ShadowCopyFiles)
             {
                 Uri uri = new Uri(executingAssembly.CodeBase);
@@ -182,8 +180,7 @@ namespace OpenQA.Selenium.Internal
         /// <returns>The full path to the random directory name in the temporary directory.</returns>
         public static string GenerateRandomTempDirectoryName(string directoryPattern)
         {
-            string randomNumber = tempFileGenerator.Next().ToString(CultureInfo.InvariantCulture);
-            string directoryName = string.Format(CultureInfo.InvariantCulture, directoryPattern, randomNumber);
+            string directoryName = string.Format(CultureInfo.InvariantCulture, directoryPattern, Guid.NewGuid().ToString("N"));
             return Path.Combine(Path.GetTempPath(), directoryName);
         }
     }

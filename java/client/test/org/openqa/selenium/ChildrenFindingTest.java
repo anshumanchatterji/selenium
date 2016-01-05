@@ -1,18 +1,19 @@
-/*
-Copyright 2007-2009 Selenium committers
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
- */
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 package org.openqa.selenium;
 
@@ -20,6 +21,7 @@ import org.junit.Test;
 import org.openqa.selenium.testing.Ignore;
 import org.openqa.selenium.testing.JUnit4TestBase;
 import org.openqa.selenium.testing.JavascriptEnabled;
+import org.openqa.selenium.testing.NotYetImplemented;
 
 import java.util.List;
 
@@ -148,11 +150,12 @@ public class ChildrenFindingTest extends JUnit4TestBase {
     driver.get(pages.nestedPage);
     WebElement element = driver.findElement(By.name("div1"));
     WebElement child = element.findElement(By.linkText("hello world"));
+    List<WebElement> invalidChildren = element.findElements(By.linkText("HellO WorLD"));
+    assertEquals(0, invalidChildren.size());
     assertThat(child.getAttribute("name"), is("link1"));
   }
 
   @Test
-  @Ignore(MARIONETTE)
   public void testFindElementsByLinkTest() {
     driver.get(pages.nestedPage);
     WebElement element = driver.findElement(By.name("div1"));
@@ -203,7 +206,6 @@ public class ChildrenFindingTest extends JUnit4TestBase {
     assertEquals(2, elements.size());
   }
 
-  @JavascriptEnabled
   @Test
   public void testShouldBeAbleToFindAnElementByCssSelector() {
     driver.get(pages.nestedPage);
@@ -214,7 +216,6 @@ public class ChildrenFindingTest extends JUnit4TestBase {
     assertEquals("2", element.getAttribute("id"));
   }
 
-  @JavascriptEnabled
   @Test
   public void testShouldBeAbleToFindAnElementByCss3Selector() {
     driver.get(pages.nestedPage);
@@ -225,7 +226,6 @@ public class ChildrenFindingTest extends JUnit4TestBase {
     assertEquals("2", element.getAttribute("id"));
   }
 
-  @JavascriptEnabled
   @Test
   public void testShouldBeAbleToFindElementsByCssSelector() {
     driver.get(pages.nestedPage);
@@ -290,7 +290,7 @@ public class ChildrenFindingTest extends JUnit4TestBase {
     assertEquals("child", child.getAttribute("id"));
   }
 
-  @Ignore({REMOTE, MARIONETTE})
+  @Ignore({REMOTE})
   @Test
   public void testFindMultipleElements() {
     driver.get(pages.simpleTestPage);
@@ -323,7 +323,7 @@ public class ChildrenFindingTest extends JUnit4TestBase {
   }
 
   @Test
-  @Ignore(MARIONETTE)
+  @NotYetImplemented(MARIONETTE)
   public void testElementCanGetLinkByLinkTestIgnoringTrailingWhitespace() {
     driver.get(pages.simpleTestPage);
     WebElement elem = driver.findElement(By.id("links"));

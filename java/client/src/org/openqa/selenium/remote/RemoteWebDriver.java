@@ -1,18 +1,19 @@
-/*
-Copyright 2007-2012 Selenium committers
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
- */
+// Licensed to the Software Freedom Conservancy (SFC) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The SFC licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
 
 package org.openqa.selenium.remote;
 
@@ -31,10 +32,13 @@ import org.openqa.selenium.Cookie;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.HasCapabilities;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.NoSuchFrameException;
+import org.openqa.selenium.NoSuchWindowException;
+import org.openqa.selenium.OutputType;
 import org.openqa.selenium.Platform;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.SearchContext;
-import org.openqa.selenium.UnsupportedCommandException;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
@@ -48,15 +52,16 @@ import org.openqa.selenium.internal.FindsByLinkText;
 import org.openqa.selenium.internal.FindsByName;
 import org.openqa.selenium.internal.FindsByTagName;
 import org.openqa.selenium.internal.FindsByXPath;
+import org.openqa.selenium.logging.LocalLogs;
 import org.openqa.selenium.logging.LogType;
 import org.openqa.selenium.logging.LoggingHandler;
 import org.openqa.selenium.logging.LoggingPreferences;
-import org.openqa.selenium.logging.NeedsLocalLogs;
-import org.openqa.selenium.logging.LocalLogs;
 import org.openqa.selenium.logging.Logs;
+import org.openqa.selenium.logging.NeedsLocalLogs;
 import org.openqa.selenium.remote.internal.JsonToWebElementConverter;
 import org.openqa.selenium.remote.internal.WebElementToJsonConverter;
 import org.openqa.selenium.security.Credentials;
+import org.openqa.selenium.security.UserAndPassword;
 
 import java.net.URL;
 import java.util.Date;
@@ -69,17 +74,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@Augmentable
 public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
     FindsById, FindsByClassName, FindsByLinkText, FindsByName,
     FindsByCssSelector, FindsByTagName, FindsByXPath,
-    HasInputDevices, HasCapabilities {
+    HasInputDevices, HasCapabilities, TakesScreenshot {
 
   // TODO(dawagner): This static logger should be unified with the per-instance localLogs
   private static final Logger logger = Logger.getLogger(RemoteWebDriver.class.getName());
   private Level level = Level.FINE;
 
-  private final ErrorHandler errorHandler = new ErrorHandler();
-
+  private ErrorHandler errorHandler = new ErrorHandler();
   private CommandExecutor executor;
   private Capabilities capabilities;
   private SessionId sessionId;
@@ -92,6 +97,8 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
   private RemoteMouse mouse;
   private Logs remoteLogs;
   private LocalLogs localLogs;
+
+  private int w3cComplianceLevel = 0;
 
   // For cglib
   protected RemoteWebDriver() {
@@ -107,8 +114,30 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
     if (executor instanceof NeedsLocalLogs) {
       ((NeedsLocalLogs)executor).setLocalLogs(localLogs);
     }
-    startClient();
-    startSession(desiredCapabilities, requiredCapabilities);
+
+    try {
+      startClient();
+    } catch (RuntimeException e) {
+      try {
+        stopClient();
+      } catch (Exception ignored) {
+        // Ignore the clean-up exception. We'll propagate the original failure.
+      }
+
+      throw e;
+    }
+
+    try {
+      startSession(desiredCapabilities, requiredCapabilities);
+    } catch (RuntimeException e) {
+      try {
+        quit();
+      } catch (Exception ignored) {
+        // Ignore the clean-up exception. We'll propagate the original failure.
+      }
+
+      throw e;
+    }
   }
 
   public RemoteWebDriver(CommandExecutor executor, Capabilities desiredCapabilities) {
@@ -127,6 +156,10 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
 
   public RemoteWebDriver(URL remoteAddress, Capabilities desiredCapabilities) {
     this(new HttpCommandExecutor(remoteAddress), desiredCapabilities, null);
+  }
+
+  public int getW3CStandardComplianceLevel() {
+    return w3cComplianceLevel;
   }
 
   private void init(Capabilities desiredCapabilities, Capabilities requiredCapabilities) {
@@ -241,6 +274,9 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
 
     capabilities = returnedCapabilities;
     sessionId = new SessionId(response.getSessionId());
+    if (response.getStatus() == null) {
+      w3cComplianceLevel = 1;
+    }
   }
 
   /**
@@ -260,6 +296,10 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
     return errorHandler;
   }
 
+  public void setErrorHandler(ErrorHandler handler) {
+    this.errorHandler = handler;
+  }
+
   public CommandExecutor getCommandExecutor() {
     return executor;
   }
@@ -276,11 +316,6 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
     execute(DriverCommand.GET, ImmutableMap.of("url", url));
   }
 
-  public RemoteStatus getRemoteStatus() {
-    Response response = execute(DriverCommand.STATUS);
-    return new RemoteStatus((Map<String, Object>) response.getValue());
-  }
-
   public String getTitle() {
     Response response = execute(DriverCommand.GET_TITLE);
     Object value = response.getValue();
@@ -288,7 +323,28 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
   }
 
   public String getCurrentUrl() {
-    return execute(DriverCommand.GET_CURRENT_URL).getValue().toString();
+    Response response = execute(DriverCommand.GET_CURRENT_URL);
+    if (response == null || response.getValue() == null) {
+      throw new WebDriverException("Remote browser did not respond to getCurrentUrl");
+    } else {
+      return response.getValue().toString();
+    }
+  }
+
+  public <X> X getScreenshotAs(OutputType<X> outputType) throws WebDriverException {
+    Response response = execute(DriverCommand.SCREENSHOT);
+    Object result = response.getValue();
+    if (result instanceof String) {
+      String base64EncodedPng = (String) result;
+      return outputType.convertFromBase64Png(base64EncodedPng);
+    } else if (result instanceof byte[]) {
+      String base64EncodedPng = new String((byte[]) result);
+      return outputType.convertFromBase64Png(base64EncodedPng);
+    } else {
+      throw new RuntimeException(String.format("Unexpected result for %s command: %s",
+          DriverCommand.SCREENSHOT,
+          result == null ? "null" : result.getClass().getName() + " instance"));
+    }
   }
 
   public List<WebElement> findElements(By by) {
@@ -344,12 +400,28 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
     return allElements;
   }
 
+  static String cssEscape(String using) {
+    using = using.replaceAll("(['\"\\\\#.:;,!?+<>=~*^$|%&@`{}\\-\\/\\[\\]\\(\\)])", "\\\\$1");
+    if (using.length() > 0 && Character.isDigit(using.charAt(0))) {
+      using = "\\" + Integer.toString(30 + Integer.parseInt(using.substring(0,1))) + " " + using.substring(1);
+    }
+    return using;
+  }
+
   public WebElement findElementById(String using) {
-    return findElement("id", using);
+    if (getW3CStandardComplianceLevel() == 0) {
+      return findElement("id", using);
+    } else {
+      return findElementByCssSelector("#" + cssEscape(using));
+    }
   }
 
   public List<WebElement> findElementsById(String using) {
-    return findElements("id", using);
+    if (getW3CStandardComplianceLevel() == 0) {
+      return findElements("id", using);
+    } else {
+      return findElementsByCssSelector("#" + cssEscape(using));
+    }
   }
 
   public WebElement findElementByLinkText(String using) {
@@ -369,27 +441,51 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
   }
 
   public WebElement findElementByTagName(String using) {
-    return findElement("tag name", using);
+    if (getW3CStandardComplianceLevel() == 0) {
+      return findElement("tag name", using);
+    } else {
+      return findElementByCssSelector(using);
+    }
   }
 
   public List<WebElement> findElementsByTagName(String using) {
-    return findElements("tag name", using);
+    if (getW3CStandardComplianceLevel() == 0) {
+      return findElements("tag name", using);
+    } else {
+      return findElementsByCssSelector(using);
+    }
   }
 
   public WebElement findElementByName(String using) {
-    return findElement("name", using);
+    if (getW3CStandardComplianceLevel() == 0) {
+      return findElement("name", using);
+    } else {
+      return findElementByCssSelector("*[name='" + using + "']");
+    }
   }
 
   public List<WebElement> findElementsByName(String using) {
-    return findElements("name", using);
+    if (getW3CStandardComplianceLevel() == 0) {
+      return findElements("name", using);
+    } else {
+      return findElementsByCssSelector("*[name='" + using + "']");
+    }
   }
 
   public WebElement findElementByClassName(String using) {
-    return findElement("class name", using);
+    if (getW3CStandardComplianceLevel() == 0) {
+      return findElement("class name", using);
+    } else {
+      return findElementByCssSelector("." + cssEscape(using));
+    }
   }
 
   public List<WebElement> findElementsByClassName(String using) {
-    return findElements("class name", using);
+    if (getW3CStandardComplianceLevel() == 0) {
+      return findElements("class name", using);
+    } else {
+      return findElementsByCssSelector("." + cssEscape(using));
+    }
   }
 
   public WebElement findElementByCssSelector(String using) {
@@ -411,7 +507,14 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
   // Misc
 
   public String getPageSource() {
-    return (String) execute(DriverCommand.GET_PAGE_SOURCE).getValue();
+    if (getW3CStandardComplianceLevel() == 0) {
+      return (String) execute(DriverCommand.GET_PAGE_SOURCE).getValue();
+    } else {
+      String script = "var source = document.documentElement.outerHTML; \n"
+                      + "if (!source) { source = new XMLSerializer().serializeToString(document); }\n"
+                      + "return source;";
+      return (String) executeScript(script);
+    }
   }
 
   public void close() {
@@ -429,18 +532,26 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
 
   @SuppressWarnings({"unchecked"})
   public Set<String> getWindowHandles() {
-    Response response = execute(DriverCommand.GET_WINDOW_HANDLES);
+    Response response;
+    if (getW3CStandardComplianceLevel() > 0) {
+      response = execute(DriverCommand.GET_WINDOW_HANDLES_W3C);
+    } else {
+      response = execute(DriverCommand.GET_WINDOW_HANDLES);
+    }
     Object value = response.getValue();
     try {
       List<String> returnedValues = (List<String>) value;
       return new LinkedHashSet<String>(returnedValues);
     } catch (ClassCastException ex) {
       throw new WebDriverException(
-          "Returned value cannot be converted to List<String>: " + value, ex);
+        "Returned value cannot be converted to List<String>: " + value, ex);
     }
   }
 
   public String getWindowHandle() {
+    if (getW3CStandardComplianceLevel() > 0) {
+      return String.valueOf(execute(DriverCommand.GET_CURRENT_WINDOW_HANDLE_W3C).getValue());
+    }
     return String.valueOf(execute(DriverCommand.GET_CURRENT_WINDOW_HANDLE).getValue());
   }
 
@@ -460,6 +571,9 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
         "script", script,
         "args", Lists.newArrayList(convertedArgs));
 
+    if (getW3CStandardComplianceLevel() > 0) {
+      return execute(DriverCommand.EXECUTE_SCRIPT_W3C, params).getValue();
+    }
     return execute(DriverCommand.EXECUTE_SCRIPT, params).getValue();
   }
 
@@ -478,6 +592,9 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
     Map<String, ?> params = ImmutableMap.of(
         "script", script, "args", Lists.newArrayList(convertedArgs));
 
+    if (getW3CStandardComplianceLevel() > 0) {
+      return execute(DriverCommand.EXECUTE_ASYNC_SCRIPT_W3C, params).getValue();
+    }
     return execute(DriverCommand.EXECUTE_ASYNC_SCRIPT, params).getValue();
   }
 
@@ -545,7 +662,14 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
         errorMessage = "Could not start a new session. Possible causes are " +
             "invalid address of the remote server or browser start-up failure.";
       }
-      throw new UnreachableBrowserException(errorMessage, e);
+      UnreachableBrowserException ube = new UnreachableBrowserException(errorMessage, e);
+      if (getSessionId() != null) {
+        ube.addInfo(WebDriverException.SESSION_ID, getSessionId().toString());
+      }
+      if (getCapabilities() != null) {
+        ube.addInfo("Capabilities", getCapabilities().toString());
+      }
+      throw ube;
     } finally {
       Thread.currentThread().setName(currentName);
     }
@@ -553,6 +677,14 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
     try {
       errorHandler.throwIfResponseFailed(response, System.currentTimeMillis() - start);
     } catch (WebDriverException ex) {
+      if (parameters != null && parameters.containsKey("using") && parameters.containsKey("value")) {
+        ex.addInfo(
+            "*** Element info",
+            String.format(
+                "{Using=%s, value=%s}",
+                parameters.get("using"),
+                parameters.get("value")));
+      }
       ex.addInfo(WebDriverException.DRIVER_INFO, this.getClass().getName());
       if (getSessionId() != null) {
         ex.addInfo(WebDriverException.SESSION_ID, getSessionId().toString());
@@ -587,6 +719,7 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
    * @param sessionId   the session id.
    * @param commandName the command that is being executed.
    * @param toLog       any data that might be interesting.
+   * @param when        verb tense of "Execute" to prefix message
    */
   protected void log(SessionId sessionId, String commandName, Object toLog, When when) {
     String text = "" + toLog;
@@ -644,9 +777,14 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
     public Set<Cookie> getCookies() {
       Object returned = execute(DriverCommand.GET_ALL_COOKIES).getValue();
 
+      Set<Cookie> toReturn = new HashSet<>();
+
       List<Map<String, Object>> cookies =
           new JsonToBeanConverter().convert(List.class, returned);
-      Set<Cookie> toReturn = new HashSet<Cookie>();
+      if (cookies == null) {
+        return toReturn;
+      }
+
       for (Map<String, Object> rawCookie : cookies) {
         String name = (String) rawCookie.get("name");
         String value = (String) rawCookie.get("value");
@@ -722,14 +860,16 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
     protected class RemoteTimeouts implements Timeouts {
 
       public Timeouts implicitlyWait(long time, TimeUnit unit) {
-        execute(DriverCommand.IMPLICITLY_WAIT, ImmutableMap.of("ms",
-            TimeUnit.MILLISECONDS.convert(Math.max(0, time), unit)));
+        execute(DriverCommand.SET_TIMEOUT, ImmutableMap.of(
+            "type", "implicit",
+            "ms", TimeUnit.MILLISECONDS.convert(time, unit)));
         return this;
       }
 
       public Timeouts setScriptTimeout(long time, TimeUnit unit) {
-        execute(DriverCommand.SET_SCRIPT_TIMEOUT,
-            ImmutableMap.of("ms", TimeUnit.MILLISECONDS.convert(time, unit)));
+        execute(DriverCommand.SET_TIMEOUT, ImmutableMap.of(
+            "type", "script",
+            "ms", TimeUnit.MILLISECONDS.convert(time, unit)));
         return this;
       }
 
@@ -745,21 +885,33 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
     protected class RemoteWindow implements Window {
 
       public void setSize(Dimension targetSize) {
-        execute(DriverCommand.SET_WINDOW_SIZE,
-            ImmutableMap.of("windowHandle", "current",
-                "width", targetSize.width, "height", targetSize.height));
+        if (getW3CStandardComplianceLevel() == 0) {
+          execute(DriverCommand.SET_WINDOW_SIZE,
+                  ImmutableMap.of("windowHandle", "current",
+                                  "width", targetSize.width, "height", targetSize.height));
+        } else {
+          execute(DriverCommand.SET_CURRENT_WINDOW_SIZE,
+                  ImmutableMap.of("width", targetSize.width, "height", targetSize.height));
+        }
       }
 
       public void setPosition(Point targetPosition) {
-        execute(DriverCommand.SET_WINDOW_POSITION,
-            ImmutableMap
-                .of("windowHandle", "current", "x", targetPosition.x, "y", targetPosition.y));
+        if (getW3CStandardComplianceLevel() == 0) {
+          execute(DriverCommand.SET_WINDOW_POSITION,
+                  ImmutableMap
+                    .of("windowHandle", "current", "x", targetPosition.x, "y", targetPosition.y));
+        } else {
+          executeScript("window.screenX = arguments[0]; window.screenY = arguments[1]",
+                        targetPosition.x, targetPosition.y);
+        }
       }
 
       @SuppressWarnings({"unchecked"})
       public Dimension getSize() {
-        Response response = execute(DriverCommand.GET_WINDOW_SIZE,
-            ImmutableMap.of("windowHandle", "current"));
+        Response response = getW3CStandardComplianceLevel() == 0
+            ? execute(DriverCommand.GET_WINDOW_SIZE, ImmutableMap.of("windowHandle", "current"))
+            : execute(DriverCommand.GET_CURRENT_WINDOW_SIZE);
+
         Map<String, Object> rawSize = (Map<String, Object>) response.getValue();
 
         int width = ((Number) rawSize.get("width")).intValue();
@@ -769,10 +921,16 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
       }
 
       @SuppressWarnings({"unchecked"})
+      Map<String, Object> rawPoint;
       public Point getPosition() {
-        Response response = execute(DriverCommand.GET_WINDOW_POSITION,
-            ImmutableMap.of("windowHandle", "current"));
-        Map<String, Object> rawPoint = (Map<String, Object>) response.getValue();
+        if (getW3CStandardComplianceLevel() == 0) {
+          Response response = execute(DriverCommand.GET_WINDOW_POSITION,
+                                      ImmutableMap.of("windowHandle", "current"));
+          rawPoint = (Map<String, Object>) response.getValue();
+        } else {
+          rawPoint = (Map<String, Object>) executeScript(
+              "return {x: window.screenX, y: window.screenY}");
+        }
 
         int x = ((Number) rawPoint.get("x")).intValue();
         int y = ((Number) rawPoint.get("y")).intValue();
@@ -781,8 +939,16 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
       }
 
       public void maximize() {
-        execute(DriverCommand.MAXIMIZE_WINDOW,
-            ImmutableMap.of("windowHandle", "current"));
+        if (getW3CStandardComplianceLevel() == 0) {
+          execute(DriverCommand.MAXIMIZE_WINDOW,
+                  ImmutableMap.of("windowHandle", "current"));
+        } else {
+          execute(DriverCommand.MAXIMIZE_CURRENT_WINDOW);
+        }
+      }
+
+      public void fullscreen() {
+        execute(DriverCommand.FULLSCREEN_CURRENT_WINDOW);
       }
     }
   }
@@ -818,8 +984,17 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
     }
 
     public WebDriver frame(String frameName) {
-      execute(DriverCommand.SWITCH_TO_FRAME, ImmutableMap.of("id", frameName));
-      return RemoteWebDriver.this;
+      String name = frameName.replaceAll("(['\"\\\\#.:;,!?+<>=~*^$|%&@`{}\\-/\\[\\]\\(\\)])", "\\\\$1");
+      List<WebElement> frameElements = RemoteWebDriver.this.findElements(
+          By.cssSelector("frame[name='" + name + "'],iframe[name='" + name + "']"));
+      if (frameElements.size() == 0) {
+        frameElements = RemoteWebDriver.this.findElements(
+            By.cssSelector("frame#" + name + ",iframe#" + name));
+      }
+      if (frameElements.size() == 0) {
+        throw new NoSuchFrameException("No frame element found by name or id " + frameName);
+      }
+      return frame(frameElements.get(0));
     }
 
     public WebDriver frame(WebElement frameElement) {
@@ -828,9 +1003,32 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
       return RemoteWebDriver.this;
     }
 
-    public WebDriver window(String windowName) {
-      execute(DriverCommand.SWITCH_TO_WINDOW, ImmutableMap.of("name", windowName));
+    public WebDriver parentFrame() {
+      execute(DriverCommand.SWITCH_TO_PARENT_FRAME);
       return RemoteWebDriver.this;
+    }
+
+    public WebDriver window(String windowHandleOrName) {
+      if (getW3CStandardComplianceLevel() == 0) {
+        execute(DriverCommand.SWITCH_TO_WINDOW, ImmutableMap.of("name", windowHandleOrName));
+        return RemoteWebDriver.this;
+      } else {
+        try {
+          execute(DriverCommand.SWITCH_TO_WINDOW, ImmutableMap.of("handle", windowHandleOrName));
+          return RemoteWebDriver.this;
+        } catch (NoSuchWindowException nsw) {
+          // simulate search by name
+          String original = getWindowHandle();
+          for (String handle : getWindowHandles()) {
+            switchTo().window(handle);
+            if (windowHandleOrName.equals(executeScript("return window.name"))) {
+              return RemoteWebDriver.this; // found by name
+            }
+          }
+          switchTo().window(original);
+          throw nsw;
+        }
+      }
     }
 
     public WebDriver defaultContent() {
@@ -857,23 +1055,62 @@ public class RemoteWebDriver implements WebDriver, JavascriptExecutor,
     }
 
     public void dismiss() {
-      execute(DriverCommand.DISMISS_ALERT);
+      if (getW3CStandardComplianceLevel() > 0) {
+        execute(DriverCommand.DISMISS_ALERT_W3C);
+      } else {
+        execute(DriverCommand.DISMISS_ALERT);
+      }
     }
 
     public void accept() {
-      execute(DriverCommand.ACCEPT_ALERT);
+      if (getW3CStandardComplianceLevel() > 0) {
+        execute(DriverCommand.ACCEPT_ALERT_W3C);
+      } else {
+        execute(DriverCommand.ACCEPT_ALERT);
+      }
     }
 
     public String getText() {
+      if (getW3CStandardComplianceLevel() > 0) {
+        return (String) execute(DriverCommand.GET_ALERT_TEXT_W3C).getValue();
+      }
       return (String) execute(DriverCommand.GET_ALERT_TEXT).getValue();
     }
 
     public void sendKeys(String keysToSend) {
-      execute(DriverCommand.SET_ALERT_VALUE, ImmutableMap.of("text", keysToSend));
+      if (getW3CStandardComplianceLevel() > 0) {
+        execute(DriverCommand.SET_ALERT_VALUE_W3C, ImmutableMap.of("text", keysToSend));
+      } else {
+        execute(DriverCommand.SET_ALERT_VALUE, ImmutableMap.of("text", keysToSend));
+      }
     }
 
+    @Beta
+    public void setCredentials(Credentials credentials) {
+      if (!(credentials instanceof UserAndPassword)) {
+        throw new RuntimeException("Unsupported credentials: " + credentials);
+      }
+
+      UserAndPassword userAndPassword = (UserAndPassword) credentials;
+      execute(
+        DriverCommand.SET_ALERT_CREDENTIALS,
+        ImmutableMap.of(
+          "username", userAndPassword.getUsername(),
+          "password", userAndPassword.getPassword()));
+    }
+
+    /**
+     * Authenticate an HTTP Basic Auth dialog.
+     * Implicitly 'clicks ok'
+     *
+     * Usage: driver.switchTo().alert().authenticateUsing(new UsernamePasswordCredentials("cheese",
+     *        "secretGouda"));
+     * @param credentials credentials to pass to Auth prompt
+     */
+    @Beta
     public void authenticateUsing(Credentials credentials) {
-      throw new UnsupportedCommandException("Not implemented yet");
+      this.setCredentials(credentials);
+      this.accept();
     }
   }
 

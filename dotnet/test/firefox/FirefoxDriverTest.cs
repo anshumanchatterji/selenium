@@ -6,6 +6,7 @@ using OpenQA.Selenium.Firefox.Internal;
 using System.Threading;
 using System.Collections.ObjectModel;
 using OpenQA.Selenium.Environment;
+using System.IO;
 
 namespace OpenQA.Selenium.Firefox
 {
@@ -81,7 +82,18 @@ namespace OpenQA.Selenium.Firefox
         }
 
         [Test]
-        [NeedsFreshDriver(BeforeTest = true, AfterTest = true)]
+        public void ShouldRemoveProfileAfterExit()
+        {
+            FirefoxProfile profile = new FirefoxProfile();
+            IWebDriver firefox = new FirefoxDriver(profile);
+            string profileLocation = profile.ProfileDirectory;
+
+            firefox.Quit();
+            Assert.IsFalse(Directory.Exists(profileLocation));
+        }
+
+        [Test]
+        [NeedsFreshDriver(IsCreatedBeforeTest = true, IsCreatedAfterTest = true)]
         public void FocusRemainsInOriginalWindowWhenOpeningNewWindow()
         {
             if (PlatformHasNativeEvents() == false)
@@ -105,7 +117,7 @@ namespace OpenQA.Selenium.Firefox
         }
 
         [Test]
-        [NeedsFreshDriver(BeforeTest = true, AfterTest = true)]
+        [NeedsFreshDriver(IsCreatedBeforeTest = true, IsCreatedAfterTest = true)]
         public void SwitchingWindowShouldSwitchFocus()
         {
             if (PlatformHasNativeEvents() == false)
@@ -150,7 +162,7 @@ namespace OpenQA.Selenium.Firefox
         }
 
         [Test]
-        [NeedsFreshDriver(BeforeTest = true, AfterTest = true)]
+        [NeedsFreshDriver(IsCreatedBeforeTest = true, IsCreatedAfterTest = true)]
         public void ClosingWindowAndSwitchingToOriginalSwitchesFocus()
         {
             if (PlatformHasNativeEvents() == false)
