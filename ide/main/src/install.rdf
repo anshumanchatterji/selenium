@@ -4,7 +4,7 @@
     <Description about="urn:mozilla:install-manifest">
         <em:id>{66d128e0-4fbd-40f1-8c76-d9228a428549}</em:id>
         <em:name>Selenium IDE for OpKey v12</em:name>
-        <em:version>2.9.0</em:version>
+        <em:version>2.9.1</em:version>
         <em:creator>Shinya Kasatani</em:creator>
         <em:developer>Adam Goucher</em:developer>
         <em:developer>Samit Badle</em:developer>

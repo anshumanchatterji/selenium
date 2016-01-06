@@ -924,7 +924,7 @@ function sendElementOverHttp(command, target, value, element, doc){
 	//load jquery dynamically...
 	//http://stackoverflow.com/questions/532507/firefox-extension-with-jquery-1-3
 	var jsLoader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"].getService(Components.interfaces.mozIJSSubScriptLoader);
-	jsLoader.loadSubScript("chrome://selenium-ide/content/jquery-1.3.2.js");	
+	jsLoader.loadSubScript("chrome://selenium-ide/content/jquery-2.1.4.min.js");	
 	$mb = jQuery.noConflict();
 	$mb.post(getOpKeySeleniumServerAddress(), p, function(data) {
 		$mb('.result').html(data);
