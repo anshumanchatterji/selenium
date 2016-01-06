@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
  xmlns:em="http://www.mozilla.org/2004/em-rdf#">
-    <Description>
+    <Description about="urn:mozilla:install-manifest">
         <em:id>{66d128e0-4fbd-40f1-8c76-d9228a428549}</em:id>
         <em:name>Selenium IDE for OpKey v12</em:name>
         <em:version>2.9.0</em:version>
@@ -14,7 +14,7 @@
         <em:type>2</em:type>
         <em:homepageURL>http://opkey.crestechglobal.com/</em:homepageURL>
         <em:optionsURL>chrome://selenium-ide/content/optionsDialog.xul</em:optionsURL>
-        <!--em:updateURL>https://addons.seleniumhq.org/se-ide/update.rdf</em:updateURL -->
+        <!--em:updateURL>https://addons.seleniumhq.org/se-ide/update.rdf</em:updateURL-->
         <em:iconURL>chrome://selenium-ide/content/images/ico_Selenium-32.png</em:iconURL>
 
         <em:targetApplication>
@@ -29,7 +29,7 @@
           <Description>
             <em:locale>fr-FR</em:locale>
             <em:name>Selenium IDE</em:name>
-            <em:description>Enregistrer, modifier et exécuter des tests Selenium</em:description>
+            <em:description>Enregistrer, modifier et exÃ©cuter des tests Selenium</em:description>
           </Description>
         </em:localized>
     </Description>
