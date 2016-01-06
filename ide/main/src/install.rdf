@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
  xmlns:em="http://www.mozilla.org/2004/em-rdf#">
-    <Description about="urn:mozilla:install-manifest">
+    <Description>
         <em:id>{66d128e0-4fbd-40f1-8c76-d9228a428549}</em:id>
-        <em:name>Selenium IDE for OpKey v11</em:name>
+        <em:name>Selenium IDE for OpKey v12</em:name>
         <em:version>2.9.0</em:version>
         <em:creator>Shinya Kasatani</em:creator>
         <em:developer>Adam Goucher</em:developer>
@@ -29,7 +29,7 @@
           <Description>
             <em:locale>fr-FR</em:locale>
             <em:name>Selenium IDE</em:name>
-            <em:description>Enregistrer, modifier et exÃ©cuter des tests Selenium</em:description>
+            <em:description>Enregistrer, modifier et exécuter des tests Selenium</em:description>
           </Description>
         </em:localized>
     </Description>
