@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace OpenQA.Selenium.Remote
 {
@@ -72,10 +71,16 @@ namespace OpenQA.Selenium.Remote
         /// <param name="keysToSend">The keystrokes to send.</param>
         public void SendKeys(string keysToSend)
         {
+            if (keysToSend == null)
+            {
+                throw new ArgumentNullException("keysToSend", "Keys to send must not be null.");
+            }
+
             Dictionary<string, object> parameters = new Dictionary<string, object>();
             if (this.driver.IsSpecificationCompliant)
             {
-                parameters.Add("message", keysToSend);
+                parameters.Add("value", keysToSend.ToCharArray());
+                parameters.Add("text", keysToSend);
             }
             else
             {

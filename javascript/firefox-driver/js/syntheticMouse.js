@@ -83,9 +83,20 @@ SyntheticMouse.prototype.isElementShownAndClickable = function(element) {
     return error;
   }
 
-  var error = this.isElementClickable(element);
-  if (error) {
-    return error;
+  var checkOverlapping = true;
+  try {
+    var prefStore = fxdriver.moz.getService('@mozilla.org/preferences-service;1',
+                                            'nsIPrefBranch');
+    if (prefStore.getBoolPref('webdriver.overlappingCheckDisabled', false)) {
+      checkOverlapping = false;
+    }
+  } catch (ignored) {}
+
+  if (checkOverlapping) {
+    error = this.isElementClickable(element);
+    if (error) {
+      return error;
+    }
   }
 }
 
@@ -108,6 +119,11 @@ SyntheticMouse.prototype.isElementClickable = function(element) {
 
   var tagName = element.tagName.toLowerCase();
 
+  // TODO: https://gist.github.com/p0deje/c549e93fa19bf7aaee49
+  if ('select' == tagName) {
+    return;
+  }
+
   // Check to see if this is an option element. If it is, and the parent isn't a multiple
   // select, then check that select is clickable.
   if ('option' == tagName) {
@@ -116,7 +132,7 @@ SyntheticMouse.prototype.isElementClickable = function(element) {
       parent = parent.parentNode;
     }
 
-    if (parent && parent.tagName.toLowerCase() == 'select' && !parent.multiple) {
+    if (parent && parent.tagName.toLowerCase() == 'select') {
       return this.isElementClickable(parent);
     }
   }
@@ -168,11 +184,28 @@ SyntheticMouse.prototype.isElementClickable = function(element) {
     parentElemIter = parentElemIter.parentNode;
   }
 
+  // elementFromPoint is not without fault, for example:
+  // <button><span></button> and span.click() results in
+  // elementAtPoint being the button rather than the span.
+  // catch these potential edge cases by checking if the
+  // target element is a direct descendent of the elementAtPoint
+  parentElemIter = element.parentNode;
+  while (parentElemIter) {
+    if (parentElemIter == elementAtPoint) {
+      return;
+    }
+    parentElemIter = parentElemIter.parentNode;
+  }
+
   var elementAtPointHTML =
     elementAtPoint.outerHTML.replace(elementAtPoint.innerHTML, '');
+  
+  var elementHTML =
+    element.outerHTML.replace(element.innerHTML, '');
 
   return SyntheticMouse.newResponse(bot.ErrorCode.UNKNOWN_ERROR,
-      'Element is not clickable at point (' + coords.x + ', ' + coords.y + '). ' +
+      'Element ' + elementHTML + ' is not clickable at point (' 
+       + coords.x + ', ' + coords.y + '). ' +
       'Other element would receive the click: ' + elementAtPointHTML);
 };
 
@@ -283,20 +316,24 @@ SyntheticMouse.prototype.click = function(target) {
     }
 
     if (parent && parent.tagName.toLowerCase() == 'select' && !parent.multiple) {
+      goog.log.info(SyntheticMouse.LOG_, 'About to do a bot.action.click on ' + parent);
       bot.action.click(parent, undefined /* coords */);
     }
 
     goog.log.info(SyntheticMouse.LOG_, 'About to do a bot.action.click on ' + element);
-    bot.action.click(element, this.lastMousePosition, new bot.Mouse(null, this.modifierKeys));
+    bot.action.click(element, undefined, new bot.Mouse(null, this.modifierKeys));
 
   } else {
     goog.log.info(SyntheticMouse.LOG_, 'About to do a bot.action.click on ' + element);
     bot.action.click(element, this.lastMousePosition, this.getMouse_(), true);
   }
 
-  if (bot.dom.isEditable(element) && element.value !== undefined) {
-    goog.dom.selection.setCursorPosition(
+  try { // https://github.com/SeleniumHQ/selenium/issues/1509
+    if (bot.dom.isEditable(element) && element.value !== undefined) {
+      goog.dom.selection.setCursorPosition(
         element, element.value.length);
+    }
+  } catch (ignored) {
   }
 
   this.lastElement = element;

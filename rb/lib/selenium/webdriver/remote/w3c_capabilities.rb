@@ -24,21 +24,28 @@ module Selenium
       # Specification of the desired and/or actual capabilities of the browser that the
       # server is being asked to create.
       #
+
+      # TODO - uncomment when Mozilla fixes this:
+      # https://bugzilla.mozilla.org/show_bug.cgi?id=1326397
       class W3CCapabilities
+        KNOWN = [
+          :browser_name,
+          :browser_version,
+          :platform_name,
+          :platform_version,
+          :accept_insecure_certs,
+          :page_load_strategy,
+          :proxy,
+          :remote_session_id,
+          :accessibility_checks,
+          :rotatable,
+          :device,
+          :implicit_timeout,
+          :page_load_timeout,
+          :script_timeout,
+        ].freeze
 
-        DEFAULTS = {
-          :browser_name => '',
-          :browser_version => :any,
-          :platform_name => :any,
-          :platform_version => :any,
-          :accept_ssl_certs => false,
-          :takes_screenshot => false,
-          :takes_element_screenshot => false,
-          :page_load_strategy => 'normal',
-          :proxy => nil
-        }
-
-        DEFAULTS.each_key do |key|
+        KNOWN.each do |key|
           define_method key do
             @capabilities.fetch(key)
           end
@@ -48,36 +55,42 @@ module Selenium
           end
         end
 
+        #
+        # Backward compatibility
+        #
+
         alias_method :version, :browser_version
+        alias_method :version=, :browser_version=
         alias_method :platform, :platform_name
+        alias_method :platform=, :platform_name=
 
         #
         # Convenience methods for the common choices.
         #
 
         class << self
-
           def edge(opts = {})
             new({
-              :browser_name => "MicrosoftEdge",
-              :platform => :windows,
-                }.merge(opts))
+              browser_name: 'MicrosoftEdge',
+              platform: :windows
+            }.merge(opts))
           end
 
           def firefox(opts = {})
-            opts[:browser_version] = opts.delete :version
-            opts[:platform_name] = opts.delete :platform
-
-            new({
-              :browser_name => "firefox",
-              :marionette => true
-                }.merge(opts))
+            opts[:browser_version] = opts.delete(:version) if opts.key?(:version)
+            opts[:platform_name] = opts.delete(:platform) if opts.key?(:platform)
+            opts[:timeouts] = {}
+            opts[:timeouts]['implicit'] = opts.delete(:implicit_timeout) if opts.key?(:implicit_timeout)
+            opts[:timeouts]['page load'] = opts.delete(:page_load_timeout) if opts.key?(:page_load_timeout)
+            opts[:timeouts]['script'] = opts.delete(:script_timeout) if opts.key?(:script_timeout)
+            new({browser_name: 'firefox', marionette: true}.merge(opts))
           end
 
           alias_method :ff, :firefox
 
           def w3c?(opts = {})
-            opts[:desired_capabilities].is_a?(W3CCapabilities) || opts[:marionette]
+            opts[:marionette] != false &&
+                (!opts[:desired_capabilities] || opts[:desired_capabilities][:marionette] != false)
           end
 
           #
@@ -88,29 +101,27 @@ module Selenium
             data = data.dup
 
             caps = new
-            caps.browser_name = data.delete("browserName")
-            caps.browser_version = data.delete("browserVersion")
-            caps.platform_name = data.delete("platformName")
-            caps.platform_version = data.delete("platformVersion")
-            caps.accept_ssl_certs = data.delete("acceptSslCerts")
-            caps.takes_screenshot = data.delete("takesScreenshot")
-            caps.takes_element_screenshot = data.delete("takesElementScreenshot")
-            caps.page_load_strategy = data.delete("pageLoadStrategy")
-            caps.proxy = Proxy.json_create(data['proxy']) if data.has_key?('proxy')
+            caps.browser_name = data.delete('browserName')
+            caps.browser_version = data.delete('browserVersion')
+            caps.platform_name = data.delete('platformName')
+            caps.platform_version = data.delete('platformVersion')
+            caps.accept_insecure_certs = data.delete('acceptInsecureCerts') if data.key?('acceptInsecureCerts')
+            caps.page_load_strategy = data.delete('pageLoadStrategy')
+            timeouts = data.delete('timeouts')
+            caps.implicit_timeout = timeouts['implicit'] if timeouts
+            caps.page_load_timeout = timeouts['pageLoad'] if timeouts
+            caps.script_timeout = timeouts['script'] if timeouts
+
+            proxy = data.delete('proxy')
+            caps.proxy = Proxy.json_create(proxy) unless proxy.nil? || proxy.empty?
 
             # Remote Server Specific
             caps[:remote_session_id] = data.delete('webdriver.remote.sessionid')
 
-            # obsolete capabilities returned by Remote Server
-            data.delete("javascriptEnabled")
-            data.delete('cssSelectorsEnabled')
-
             # Marionette Specific
-            caps[:specification_level] = data.delete("specificaionLevel")
-            caps[:xul_app_id] = data.delete("XULappId")
-            caps[:raise_accessibility_exceptions] = data.delete('raisesAccessibilityExceptions')
+            caps[:accessibility_checks] = data.delete('moz:accessibilityChecks')
+            caps[:profile] = data.delete('moz:profile')
             caps[:rotatable] = data.delete('rotatable')
-            caps[:app_build_id] = data.delete('appBuildId')
             caps[:device] = data.delete('device')
 
             # any remaining pairs will be added as is, with no conversion
@@ -124,16 +135,14 @@ module Selenium
         # @option :browser_version          [String] required browser version number
         # @option :platform_name            [Symbol] one of :any, :win, :mac, or :x
         # @option :platform_version         [String] required platform version number
-        # @option :accept_ssl_certs         [Boolean] does the driver accept SSL Cerfifications?
-        # @option :takes_screenshot         [Boolean] can this driver take screenshots?
-        # @option :takes_element_screenshot [Boolean] can this driver take element screenshots?
+        # @option :accept_insecure_certs    [Boolean] does the driver accept SSL Cerfifications?
         # @option :proxy                    [Selenium::WebDriver::Proxy, Hash] proxy configuration
         #
         # @api public
         #
 
         def initialize(opts = {})
-          @capabilities = DEFAULTS.merge(opts)
+          @capabilities = opts
           self.proxy = opts.delete(:proxy)
         end
 
@@ -150,12 +159,12 @@ module Selenium
         end
 
         def merge!(other)
-          if other.respond_to?(:capabilities, true) && other.capabilities.kind_of?(Hash)
+          if other.respond_to?(:capabilities, true) && other.capabilities.is_a?(Hash)
             @capabilities.merge! other.capabilities
-          elsif other.kind_of? Hash
+          elsif other.is_a? Hash
             @capabilities.merge! other
           else
-            raise ArgumentError, "argument should be a Hash or implement #capabilities"
+            raise ArgumentError, 'argument should be a Hash or implement #capabilities'
           end
         end
 
@@ -173,7 +182,7 @@ module Selenium
         # @api private
         #
 
-        def as_json(opts = nil)
+        def as_json(*)
           hash = {}
 
           @capabilities.each do |key, value|
@@ -182,6 +191,8 @@ module Selenium
               hash['platform'] = value.to_s.upcase
             when :proxy
               hash['proxy'] = value.as_json if value
+            when :firefox_options
+              hash['moz:firefoxOptions'] = value
             when String, :firefox_binary
               hash[key.to_s] = value
             when Symbol
@@ -194,12 +205,12 @@ module Selenium
           hash
         end
 
-        def to_json(*args)
-          WebDriver.json_dump as_json
+        def to_json(*)
+          JSON.generate as_json
         end
 
         def ==(other)
-          return false unless other.kind_of? self.class
+          return false unless other.is_a? self.class
           as_json == other.as_json
         end
 
@@ -207,16 +218,13 @@ module Selenium
 
         protected
 
-        def capabilities
-          @capabilities
-        end
+        attr_reader :capabilities
 
         private
 
         def camel_case(str)
-          str.gsub(/_([a-z])/) { $1.upcase }
+          str.gsub(/_([a-z])/) { Regexp.last_match(1).upcase }
         end
-
       end # W3CCapabilities
     end # Remote
   end # WebDriver

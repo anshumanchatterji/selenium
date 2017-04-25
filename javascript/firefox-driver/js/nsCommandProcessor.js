@@ -462,10 +462,16 @@ nsCommandProcessor.prototype.execute = function(jsonCommandString,
     return;
   }
 
-  var contentWindow = sessionWindow.getBrowser().contentWindow;
-  if (!contentWindow) {
-    response.sendError(new WebDriverError(bot.ErrorCode.NO_SUCH_WINDOW,
+  try {
+    var contentWindow = sessionWindow.getBrowser().contentWindow;
+    if (!contentWindow) {
+      response.sendError(new WebDriverError(bot.ErrorCode.NO_SUCH_WINDOW,
         'Window not found. The browser window may have been closed.'));
+      return;
+    }
+  } catch (ff45) {
+    response.sendError(new WebDriverError(bot.ErrorCode.NO_SUCH_WINDOW,
+      'Window not found. The browser window may have been closed.'));
     return;
   }
 
@@ -663,7 +669,25 @@ nsCommandProcessor.prototype.getStatus = function(response) {
   var xulRuntime = Components.classes['@mozilla.org/xre/app-info;1'].
       getService(Components.interfaces.nsIXULRuntime);
 
+  var sessionStore = Components.
+      classes['@googlecode.com/webdriver/wdsessionstoreservice;1'].
+      getService(Components.interfaces.nsISupports).
+      wrappedJSObject;
+
+  var allSessions = sessionStore.getSessions();
+  var readyState = false;
+  var message = '';
+  if (goog.array.isEmpty(allSessions)) {
+    readyState = true;
+    message = 'No currently active sessions';
+  } else {
+    readyState = false;
+    message = 'Currently active sessions: ' + allSessions;
+  }
+
   response.value = {
+    'ready': readyState,
+    'message': message,
     'os': {
       'arch': (function() {
         try {
@@ -721,6 +745,7 @@ nsCommandProcessor.prototype.newSession = function(response, parameters) {
     goog.log.info(nsCommandProcessor.LOG_,
         'Created a new session with id: ' + session.getId());
     this.getSessionCapabilities(response);
+    return;  // Response already sent
   }
 
   response.send();
@@ -757,9 +782,14 @@ nsCommandProcessor.prototype.getSessionCapabilities = function(response) {
     try {
       response.value[cap] = prefStore.getBoolPref(pref);
     } catch (e) {
-      // An exception is thrown if the saught preference is not available.
-      // For instance, a Firefox version not supporting HTML5 will not have
-      // a preference for webStorageEnabled.
+      try {
+        response.value[cap] = prefStore.getIntPref(pref);
+      } catch (e) {
+        try {
+          response.value[cap] = prefStore.getCharPref(pref);
+        } catch (e) {
+        }
+      }
     }
   }
 

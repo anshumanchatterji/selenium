@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Threading;
 
 namespace OpenQA.Selenium.Support.UI
@@ -64,7 +63,7 @@ namespace OpenQA.Selenium.Support.UI
 
             if (clock == null)
             {
-                throw new ArgumentNullException("clock", "input cannot be null");
+                throw new ArgumentNullException("clock", "clock cannot be null");
             }
 
             this.input = input;

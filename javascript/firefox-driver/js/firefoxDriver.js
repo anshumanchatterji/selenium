@@ -111,7 +111,9 @@ FirefoxDriver.prototype.get = function(respond, parameters) {
   try {
     loadEventExpected = fxdriver.io.isLoadExpected(current, url);
   } catch (e) {
-    var converted = e.QueryInterface(Components.interfaces['nsIException']);
+    goog.log.warning(FirefoxDriver.LOG_, e);
+    var converted = e.QueryInterface ?
+                    e.QueryInterface(Components.interfaces['nsIException']) : e;
     if ('NS_ERROR_MALFORMED_URI' == converted.name) {
       goog.log.warning(FirefoxDriver.LOG_, converted.name);
       respond.sendError(new WebDriverError(
@@ -855,7 +857,8 @@ FirefoxDriver.prototype.setTimeout = function(respond, parameters) {
       break;
 
     default:
-      break;
+      throw new WebDriverError(bot.ErrorCode.INVALID_ARGUMENT,
+          'Unrecognised timeout type: ' + parameters.type);
   }
   respond.send();
 };
@@ -969,75 +972,28 @@ FirefoxDriver.prototype.setAlertValue = function(respond, parameters) {
 
 // IME library mapping
 FirefoxDriver.prototype.imeGetAvailableEngines = function(respond) {
-  var obj = Utils.getNativeIME();
-  var engines = {};
-
-  try {
-    obj.imeGetAvailableEngines(engines);
-    var returnArray = Utils.convertNSIArrayToNative(engines.value);
-
-    respond.value = returnArray;
-  } catch (e) {
-    throw new WebDriverError(bot.ErrorCode.IME_NOT_AVAILABLE,
-        'IME not available on the host: ' + e);
-  }
-  respond.send();
+  throw new WebDriverError(bot.ErrorCode.IME_NOT_AVAILABLE,
+      'IME not available on the host: ' + e);
 };
 
 FirefoxDriver.prototype.imeGetActiveEngine = function(respond) {
-  var obj = Utils.getNativeIME();
-  var activeEngine = {};
-  try {
-    obj.imeGetActiveEngine(activeEngine);
-    respond.value = activeEngine.value;
-  } catch (e) {
-    throw new WebDriverError(bot.ErrorCode.IME_NOT_AVAILABLE,
-        'IME not available on the host: ' + e);
-  }
-  respond.send();
+  throw new WebDriverError(bot.ErrorCode.IME_NOT_AVAILABLE,
+      'IME not available on the host: ' + e);
 };
 
 FirefoxDriver.prototype.imeIsActivated = function(respond) {
-  var obj = Utils.getNativeIME();
-  var isActive = {};
-  try {
-    obj.imeIsActivated(isActive);
-    respond.value = isActive.value;
-  } catch (e) {
-    throw new WebDriverError(bot.ErrorCode.IME_NOT_AVAILABLE,
-        'IME not available on the host: ' + e);
-  }
-  respond.send();
+  throw new WebDriverError(bot.ErrorCode.IME_NOT_AVAILABLE,
+      'IME not available on the host: ' + e);
 };
 
 FirefoxDriver.prototype.imeDeactivate = function(respond) {
-  var obj = Utils.getNativeIME();
-  try {
-    obj.imeDeactivate();
-  } catch (e) {
-    throw new WebDriverError(bot.ErrorCode.IME_NOT_AVAILABLE,
-        'IME not available on the host: ' + e);
-  }
-
-  respond.send();
+  throw new WebDriverError(bot.ErrorCode.IME_NOT_AVAILABLE,
+      'IME not available on the host: ' + e);
 };
 
 FirefoxDriver.prototype.imeActivateEngine = function(respond, parameters) {
-  var obj = Utils.getNativeIME();
-  var successfulActivation = {};
-  var engineToActivate = parameters['engine'];
-  try {
-    obj.imeActivateEngine(engineToActivate, successfulActivation);
-  } catch (e) {
-    throw new WebDriverError(bot.ErrorCode.IME_NOT_AVAILABLE,
-        'IME not available on the host: ' + e);
-  }
-
-  if (! successfulActivation.value) {
-    throw new WebDriverError(bot.ErrorCode.IME_ENGINE_ACTIVATION_FAILED,
-        'Activation of engine failed: ' + engineToActivate);
-  }
-  respond.send();
+  throw new WebDriverError(bot.ErrorCode.IME_NOT_AVAILABLE,
+      'IME not available on the host: ' + e);
 };
 
 // HTML 5
@@ -1170,11 +1126,9 @@ FirefoxDriver.prototype.mouseDoubleClick = function(respond, parameters) {
 FirefoxDriver.prototype.sendKeysToActiveElement = function(respond, parameters) {
   Utils.installWindowCloseListener(respond);
 
-  var currentlyActiveElement = Utils.getActiveElement(respond.session.getDocument());
-
-  var useElement = currentlyActiveElement;
-  var tagName = useElement.tagName.toLowerCase();
-  if (tagName == 'body' && useElement.ownerDocument.defaultView.frameElement) {
+  var useElement = Utils.getActiveElement(respond.session.getDocument());
+  if (useElement && useElement.tagName.toLowerCase() == 'body'
+      && useElement.ownerDocument.defaultView.frameElement) {
     useElement.ownerDocument.defaultView.focus();
 
     // Turns out, this is what we should be using as the target
@@ -1182,7 +1136,7 @@ FirefoxDriver.prototype.sendKeysToActiveElement = function(respond, parameters) 
     useElement = useElement.ownerDocument.getElementsByTagName('html')[0];
   }
 
-  Utils.type(respond.session.getDocument(), useElement, parameters.value.join(''),
+  Utils.type(respond.session, useElement, parameters.value.join(''),
     this.jsTimer, false /*release modifiers*/, this.modifierKeysState);
 
   respond.send();

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 using OpenQA.Selenium.Environment;
 
@@ -236,7 +234,13 @@ namespace OpenQA.Selenium
         [IgnoreBrowser(Browser.Safari, "See issue 687, comment 41")]
         public void ShouldTimeoutIfAPageTakesTooLongToLoad()
         {
-            driver.Manage().Timeouts().SetPageLoadTimeout(TimeSpan.FromSeconds(2));
+            if (TestUtilities.IsMarionette(driver))
+            {
+                // Don't run this test on Marionette.
+                Assert.Ignore("Driver does not return control from timeout wait when executed via Marionette");
+            }
+
+            driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(2);
 
             try
             {
@@ -252,7 +256,7 @@ namespace OpenQA.Selenium
             }
             finally
             {
-                driver.Manage().Timeouts().SetPageLoadTimeout(TimeSpan.MinValue);
+                driver.Manage().Timeouts().PageLoad = TimeSpan.MinValue;
             }
         }
 

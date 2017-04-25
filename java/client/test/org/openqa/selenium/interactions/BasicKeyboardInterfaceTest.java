@@ -21,10 +21,9 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
-import static org.openqa.selenium.testing.Ignore.Driver.HTMLUNIT;
-import static org.openqa.selenium.testing.Ignore.Driver.IE;
-import static org.openqa.selenium.testing.Ignore.Driver.MARIONETTE;
-import static org.openqa.selenium.testing.Ignore.Driver.SAFARI;
+import static org.openqa.selenium.testing.Driver.IE;
+import static org.openqa.selenium.testing.Driver.MARIONETTE;
+import static org.openqa.selenium.testing.Driver.SAFARI;
 
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -34,25 +33,21 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.Color;
 import org.openqa.selenium.support.Colors;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.testing.Ignore;
 import org.openqa.selenium.testing.JUnit4TestBase;
-import org.openqa.selenium.testing.JavascriptEnabled;
-import org.openqa.selenium.testing.NotYetImplemented;
 import org.openqa.selenium.testing.TestUtilities;
 
 /**
  * Tests interaction through the advanced gestures API of keyboard handling.
  */
-@Ignore(value = {SAFARI, MARIONETTE},
-    reason = "Safari: not implemented (issue 4136)",
-    issues = {4136})
+@Ignore(value = SAFARI, reason = "not implemented (issue 4136)")
 public class BasicKeyboardInterfaceTest extends JUnit4TestBase {
 
   private Actions getBuilder(WebDriver driver) {
     return new Actions(driver);
   }
 
-  @JavascriptEnabled
   @Test
   public void testBasicKeyboardInput() {
     driver.get(pages.javascriptPage);
@@ -63,12 +58,11 @@ public class BasicKeyboardInterfaceTest extends JUnit4TestBase {
 
     sendLowercase.perform();
 
-    assertThat(keyReporter.getAttribute("value"), is("abc def"));
+    shortWait.until(ExpectedConditions.attributeToBe(keyReporter, "value", "abc def"));
   }
 
-  @JavascriptEnabled
-  @Ignore({IE})
   @Test
+  @Ignore(IE)
   public void testSendingKeyDownOnly() {
     driver.get(pages.javascriptPage);
 
@@ -88,9 +82,8 @@ public class BasicKeyboardInterfaceTest extends JUnit4TestBase {
                logText.endsWith("keydown"));
   }
 
-  @JavascriptEnabled
-  @Ignore({IE})
   @Test
+  @Ignore(IE)
   public void testSendingKeyUp() {
     driver.get(pages.javascriptPage);
     WebElement keysEventInput = driver.findElement(By.id("theworks"));
@@ -113,9 +106,9 @@ public class BasicKeyboardInterfaceTest extends JUnit4TestBase {
         eventsText.endsWith("keyup"));
   }
 
-  @JavascriptEnabled
-  @Ignore({IE, HTMLUNIT})
   @Test
+  @Ignore(IE)
+  @Ignore(value = MARIONETTE, issue = "https://github.com/mozilla/geckodriver/issues/646")
   public void testSendingKeysWithShiftPressed() {
     driver.get(pages.javascriptPage);
 
@@ -141,7 +134,6 @@ public class BasicKeyboardInterfaceTest extends JUnit4TestBase {
     assertThat(keysEventInput.getAttribute("value"), is("AB"));
   }
 
-  @JavascriptEnabled
   @Test
   public void testSendingKeysToActiveElement() {
     driver.get(pages.bodyTypingPage);
@@ -165,12 +157,9 @@ public class BasicKeyboardInterfaceTest extends JUnit4TestBase {
 
     sendLowercase.perform();
 
-    assertThat(keyReporter.getAttribute("value"), is("abc def"));
+    shortWait.until(ExpectedConditions.attributeToBe(keyReporter, "value", "abc def"));
   }
 
-  @Ignore(value = {IE, SAFARI}, reason = "untested")
-  @NotYetImplemented(HTMLUNIT)
-  @JavascriptEnabled
   @Test
   public void canGenerateKeyboardShortcuts() {
     driver.get(appServer.whereIs("keyboard_shortcut.html"));
@@ -193,14 +182,14 @@ public class BasicKeyboardInterfaceTest extends JUnit4TestBase {
   }
 
   @Test
-  @NotYetImplemented(HTMLUNIT)
   public void testSelectionSelectBySymbol() {
     driver.get(pages.javascriptPage);
 
     WebElement keyReporter = driver.findElement(By.id("keyReporter"));
 
     getBuilder(driver).click(keyReporter).sendKeys("abc def").perform();
-    assertThat(keyReporter.getAttribute("value"), is("abc def"));
+
+    shortWait.until(ExpectedConditions.attributeToBe(keyReporter, "value", "abc def"));
 
     getBuilder(driver).click(keyReporter)
         .keyDown(Keys.SHIFT)
@@ -215,7 +204,6 @@ public class BasicKeyboardInterfaceTest extends JUnit4TestBase {
 
   @Test
   @Ignore(IE)
-  @NotYetImplemented(HTMLUNIT)
   public void testSelectionSelectByWord() {
     assumeFalse(
         "MacOS has alternative keyboard",
@@ -226,7 +214,8 @@ public class BasicKeyboardInterfaceTest extends JUnit4TestBase {
     WebElement keyReporter = driver.findElement(By.id("keyReporter"));
 
     getBuilder(driver).click(keyReporter).sendKeys("abc def").perform();
-    assertThat(keyReporter.getAttribute("value"), is("abc def"));
+    wait.until(
+      ExpectedConditions.attributeToBe(keyReporter, "value", "abc def"));
 
     getBuilder(driver).click(keyReporter)
         .keyDown(Keys.SHIFT)
@@ -237,12 +226,12 @@ public class BasicKeyboardInterfaceTest extends JUnit4TestBase {
         .sendKeys(Keys.DELETE)
         .perform();
 
-    assertThat(keyReporter.getAttribute("value"), is("abc "));
+    wait.until(
+      ExpectedConditions.attributeToBe(keyReporter, "value", "abc "));
   }
 
   @Test
   @Ignore(IE)
-  @NotYetImplemented(HTMLUNIT)
   public void testSelectionSelectAll() {
     assumeFalse(
         "MacOS has alternative keyboard",
@@ -253,7 +242,8 @@ public class BasicKeyboardInterfaceTest extends JUnit4TestBase {
     WebElement keyReporter = driver.findElement(By.id("keyReporter"));
 
     getBuilder(driver).click(keyReporter).sendKeys("abc def").perform();
-    assertThat(keyReporter.getAttribute("value"), is("abc def"));
+
+    shortWait.until(ExpectedConditions.attributeToBe(keyReporter, "value", "abc def"));
 
     getBuilder(driver).click(keyReporter)
         .keyDown(Keys.CONTROL)

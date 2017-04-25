@@ -20,46 +20,29 @@
 module Selenium
   module WebDriver
     module Firefox
-
       # @api private
       class W3CBridge < Remote::W3CBridge
-
         def initialize(opts = {})
-          http_client = opts.delete(:http_client)
+          opts[:desired_capabilities] = create_capabilities(opts)
 
-          opts.delete(:marionette)
-          caps = opts.delete(:desired_capabilities) { Remote::W3CCapabilities.firefox }
+          unless opts.key?(:url)
+            driver_path = opts.delete(:driver_path) || Firefox.driver_path
+            port = opts.delete(:port) || Service::DEFAULT_PORT
 
-          if opts.has_key?(:url)
-            url = opts.delete(:url)
-          else
-            Binary.path = caps[:firefox_binary] if caps[:firefox_binary]
-            if Firefox::Binary.version < 43
-              raise ArgumentError, "Firefox Version #{Firefox::Binary.version} does not support Marionette; Set firefox_binary in Capabilities to point to a supported binary"
+            opts[:driver_opts] ||= {}
+            if opts.key? :service_args
+              WebDriver.logger.warn <<-DEPRECATE.gsub(/\n +| {2,}/, ' ').freeze
+            [DEPRECATION] `:service_args` is deprecated. Pass switches using `driver_opts`
+              DEPRECATE
+              opts[:driver_opts][:args] = opts.delete(:service_args)
             end
 
-            @service = Service.default_service(*extract_service_args(opts))
-
-            if @service.instance_variable_get("@host") == "127.0.0.1"
-              @service.instance_variable_set("@host", 'localhost')
-            end
-
+            @service = Service.new(driver_path, port, opts.delete(:driver_opts))
             @service.start
-
-            url = @service.uri
+            opts[:url] = @service.uri
           end
 
-          unless opts.empty?
-            raise ArgumentError, "unknown option#{'s' if opts.size != 1}: #{opts.inspect}"
-          end
-
-          remote_opts = {
-            :url                  => url,
-            :desired_capabilities => caps
-          }
-
-          remote_opts.merge!(:http_client => http_client) if http_client
-          super(remote_opts)
+          super(opts)
         end
 
         def browser
@@ -67,11 +50,8 @@ module Selenium
         end
 
         def driver_extensions
-          [
-            DriverExtensions::TakesScreenshot,
-            DriverExtensions::HasInputDevices,
-            DriverExtensions::HasWebStorage
-          ]
+          [DriverExtensions::TakesScreenshot,
+           DriverExtensions::HasWebStorage]
         end
 
         def quit
@@ -80,18 +60,54 @@ module Selenium
           @service.stop if @service
         end
 
-        private
-
-        def extract_service_args(opts)
-          args = []
-
-          if opts.has_key?(:service_log_path)
-            args << "--log-path=#{opts.delete(:service_log_path)}"
-          end
-
-          args
+        # Support for geckodriver < 0.15
+        def resize_window(width, height, handle = :current)
+          super
+        rescue Error::UnknownCommandError
+          execute :set_window_size, {}, {width: width, height: height}
         end
 
+        def window_size(handle = :current)
+          data = super
+        rescue Error::UnknownCommandError
+          data = execute :get_window_size
+        ensure
+          return Dimension.new data['width'], data['height']
+        end
+
+        def reposition_window(x, y)
+          super
+        rescue Error::UnknownCommandError
+          execute :set_window_position, {}, {x: x, y: y}
+        end
+
+        def window_position
+          data = super
+        rescue Error::UnknownCommandError
+          data = execute :get_window_position
+        ensure
+          return Point.new data['x'], data['y']
+        end
+
+        private
+
+        def create_capabilities(opts)
+          caps = Remote::W3CCapabilities.firefox
+          caps.merge!(opts.delete(:desired_capabilities)) if opts.key? :desired_capabilities
+          firefox_options = caps[:firefox_options] || {}
+          firefox_options = firefox_options_caps.merge(opts[:firefox_options]) if opts.key?(:firefox_options)
+          if opts.key?(:profile)
+            profile = opts.delete(:profile)
+            unless profile.is_a?(Profile)
+              profile = Profile.from_name(profile)
+            end
+            firefox_options[:profile] = profile.encoded
+          end
+
+          Binary.path = firefox_options[:binary] if firefox_options.key?(:binary)
+          caps[:firefox_options] = firefox_options unless firefox_options.empty?
+          caps
+        end
       end # W3CBridge
     end # Firefox
   end # WebDriver

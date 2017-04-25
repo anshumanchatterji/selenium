@@ -26,18 +26,20 @@ var promise = require('../..').promise,
     Profile = require('../../firefox/profile').Profile,
     decode = require('../../firefox/profile').decode,
     loadUserPrefs = require('../../firefox/profile').loadUserPrefs,
-    io = require('../../io'),
-    it = require('../../testing').it;
+    io = require('../../io');
 
 
 var JETPACK_EXTENSION = path.join(__dirname,
     '../../lib/test/data/firefox/jetpack-sample.xpi');
 var NORMAL_EXTENSION = path.join(__dirname,
     '../../lib/test/data/firefox/sample.xpi');
+var WEBEXTENSION_EXTENSION = path.join(__dirname,
+  '../../lib/test/data/firefox/webextension.xpi');
 
 var JETPACK_EXTENSION_ID = 'jid1-EaXX7k0wwiZR7w@jetpack.xpi';
 var NORMAL_EXTENSION_ID = 'sample@seleniumhq.org';
 var WEBDRIVER_EXTENSION_ID = 'fxdriver@googlecode.com';
+var WEBEXTENSION_EXTENSION_ID = 'webextensions-selenium-example@example.com';
 
 
 
@@ -53,7 +55,6 @@ describe('Profile', function() {
 
     it('allows overriding mutable properties', function() {
       var profile = new Profile();
-      assert.equal('about:blank', profile.getPreference('browser.newtab.url'));
 
       profile.setPreference('browser.newtab.url', 'http://www.example.com');
       assert.equal('http://www.example.com',
@@ -155,12 +156,14 @@ describe('Profile', function() {
         var profile = new Profile();
         profile.addExtension(JETPACK_EXTENSION);
         profile.addExtension(NORMAL_EXTENSION);
+        profile.addExtension(WEBEXTENSION_EXTENSION);
 
         return profile.writeToDisk().then(function(dir) {
           dir = path.join(dir, 'extensions');
           assert.ok(fs.existsSync(path.join(dir, JETPACK_EXTENSION_ID)));
           assert.ok(fs.existsSync(path.join(dir, NORMAL_EXTENSION_ID)));
           assert.ok(fs.existsSync(path.join(dir, WEBDRIVER_EXTENSION_ID)));
+          assert.ok(fs.existsSync(path.join(dir, WEBEXTENSION_EXTENSION_ID + '.xpi')));
         });
       });
     });

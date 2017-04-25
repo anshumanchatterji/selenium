@@ -88,13 +88,10 @@
     <Compile Include="PageObjects\DefaultPageObjectMemberDecorator.cs" />
     <Compile Include="PageObjects\IElementLocator.cs" />
     <Compile Include="PageObjects\IPageObjectMemberDecorator.cs" />
-    <Compile Include="PageObjects\DefaultElementLocatorFactory.cs" />
     <Compile Include="PageObjects\FindsByAttribute.cs" />
     <Compile Include="PageObjects\FindsBySequenceAttribute.cs" />
     <Compile Include="PageObjects\How.cs" />
-    <Compile Include="PageObjects\IElementLocatorFactory.cs" />
     <Compile Include="PageObjects\PageFactory.cs" />
-    <Compile Include="PageObjects\RetryingElementLocatorFactory.cs" />
     <Compile Include="PageObjects\WebDriverObjectProxy.cs" />
     <Compile Include="PageObjects\WebElementListProxy.cs" />
     <Compile Include="PageObjects\WebElementProxy.cs" />
@@ -152,11 +149,11 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Analyzer Include="..\..\..\third_party\dotnet\stylecop\StyleCop.Analyzers.1.0.0-beta015\analyzers\dotnet\cs\Newtonsoft.Json.dll" />
-    <Analyzer Include="..\..\..\third_party\dotnet\stylecop\StyleCop.Analyzers.1.0.0-beta015\analyzers\dotnet\cs\StyleCop.Analyzers.CodeFixes.dll" />
-    <Analyzer Include="..\..\..\third_party\dotnet\stylecop\StyleCop.Analyzers.1.0.0-beta015\analyzers\dotnet\cs\StyleCop.Analyzers.dll" />
+    <None Include="WebDriver.Support.ruleset" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="WebDriver.Support.ruleset" />
+    <Analyzer Include="..\..\..\third_party\dotnet\stylecop\StyleCop.Analyzers.1.0.0-rc3\analyzers\dotnet\cs\Newtonsoft.Json.dll" />
+    <Analyzer Include="..\..\..\third_party\dotnet\stylecop\StyleCop.Analyzers.1.0.0-rc3\analyzers\dotnet\cs\StyleCop.Analyzers.CodeFixes.dll" />
+    <Analyzer Include="..\..\..\third_party\dotnet\stylecop\StyleCop.Analyzers.1.0.0-rc3\analyzers\dotnet\cs\StyleCop.Analyzers.dll" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 using System.Collections.ObjectModel;
 using OpenQA.Selenium.Internal;
@@ -51,7 +49,7 @@ namespace OpenQA.Selenium
         public void FindingASingleElementByEmptyIdShouldThrow()
         {
             driver.Url = formsPage;
-            Assert.Throws<NoSuchElementException>(() => driver.FindElement(By.Id("")));
+            Assert.Throws(Is.InstanceOf<NoSuchElementException>(), () => driver.FindElement(By.Id("")));
         }
 
         [Test]
@@ -189,15 +187,14 @@ namespace OpenQA.Selenium
         public void FindingASingleElementByEmptyTagNameShouldThrow()
         {
             driver.Url = formsPage;
-            Assert.Throws<NoSuchElementException>(() => driver.FindElement(By.TagName("")));
+            Assert.Throws<InvalidSelectorException>(() => driver.FindElement(By.TagName("")));
         }
 
         [Test]
         public void FindingMultipleElementsByEmptyTagNameShouldThrow()
         {
             driver.Url = formsPage;
-            ReadOnlyCollection<IWebElement> elements = driver.FindElements(By.TagName(""));
-            Assert.AreEqual(0, elements.Count);
+            Assert.Throws<InvalidSelectorException>(() => driver.FindElements(By.TagName("")));;
         }
 
         [Test]
@@ -306,7 +303,7 @@ namespace OpenQA.Selenium
         public void FindingASingleElementByCompoundClassNameShouldThrow()
         {
             driver.Url = xhtmlTestPage;
-            Assert.Throws<IllegalLocatorException>(() => driver.FindElement(By.ClassName("a b")));
+            Assert.Throws<InvalidSelectorException>(() => driver.FindElement(By.ClassName("a b")));
         }
 
         [Test]
@@ -315,7 +312,7 @@ namespace OpenQA.Selenium
         public void FindingMultipleElementsByCompoundClassNameShouldThrow()
         {
             driver.Url = xhtmlTestPage;
-            Assert.Throws<IllegalLocatorException>(() => driver.FindElements(By.ClassName("a b")));
+            Assert.Throws<InvalidSelectorException>(() => driver.FindElements(By.ClassName("a b")));
         }
 
         [Test]
@@ -328,6 +325,8 @@ namespace OpenQA.Selenium
         }
 
         [Test]
+        [IgnoreBrowser(Browser.IE, "Class name is perfectly legal when using CSS selector, if properly escaped.")]
+        [IgnoreBrowser(Browser.Firefox, "Class name is perfectly legal when using CSS selector, if properly escaped.")]
         [IgnoreBrowser(Browser.Chrome, "Throws WebDriverException")]
         [IgnoreBrowser(Browser.Opera, "Throws WebDriverException")]
         public void FindingMultipleElementsByInvalidClassNameShouldThrow()

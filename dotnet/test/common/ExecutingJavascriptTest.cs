@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
 using System.Collections.ObjectModel;
 
@@ -388,6 +387,11 @@ namespace OpenQA.Selenium
         [Category("Javascript")]
         public void ShouldBeAbleToGrabTheBodyOfFrameOnceSwitchedTo()
         {
+            if (TestUtilities.IsMarionette(driver))
+            {
+                Assert.Ignore("Marionette hangs once this test finishes.");
+            }
+
             driver.Url = richTextPage;
 
             driver.SwitchTo().Frame("editFrame");

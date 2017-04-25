@@ -23,6 +23,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using OpenQA.Selenium.Html5;
+using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Internal;
 
 namespace OpenQA.Selenium.Remote
@@ -60,12 +61,15 @@ namespace OpenQA.Selenium.Remote
     /// }
     /// </code>
     /// </example>
-    public class RemoteWebDriver : IWebDriver, ISearchContext, IJavaScriptExecutor, IFindsById, IFindsByClassName, IFindsByLinkText, IFindsByName, IFindsByTagName, IFindsByXPath, IFindsByPartialLinkText, IFindsByCssSelector, ITakesScreenshot, IHasInputDevices, IHasCapabilities, IHasWebStorage, IHasLocationContext, IHasApplicationCache, IAllowsFileDetection, IHasSessionId
+    public class RemoteWebDriver : IWebDriver, ISearchContext, IJavaScriptExecutor, IFindsById, IFindsByClassName, IFindsByLinkText, IFindsByName, IFindsByTagName, IFindsByXPath, IFindsByPartialLinkText, IFindsByCssSelector, ITakesScreenshot, IHasInputDevices, IHasCapabilities, IHasWebStorage, IHasLocationContext, IHasApplicationCache, IAllowsFileDetection, IHasSessionId, IActionExecutor
     {
         /// <summary>
         /// The default command timeout for HTTP requests in a RemoteWebDriver instance.
         /// </summary>
         protected static readonly TimeSpan DefaultCommandTimeout = TimeSpan.FromSeconds(60);
+
+        private const string DefaultRemoteServerUrl = "http://127.0.0.1:4444/wd/hub";
+
         private ICommandExecutor executor;
         private ICapabilities capabilities;
         private IMouse mouse;
@@ -75,6 +79,55 @@ namespace OpenQA.Selenium.Remote
         private IApplicationCache appCache;
         private ILocationContext locationContext;
         private IFileDetector fileDetector = new DefaultFileDetector();
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RemoteWebDriver"/> class. This constructor defaults proxy to http://127.0.0.1:4444/wd/hub
+        /// </summary>
+        /// <param name="options">An <see cref="DriverOptions"/> object containing the desired capabilities of the browser.</param>
+        public RemoteWebDriver(DriverOptions options)
+            : this(ConvertOptionsToCapabilities(options))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RemoteWebDriver"/> class. This constructor defaults proxy to http://127.0.0.1:4444/wd/hub
+        /// </summary>
+        /// <param name="desiredCapabilities">An <see cref="ICapabilities"/> object containing the desired capabilities of the browser.</param>
+        public RemoteWebDriver(ICapabilities desiredCapabilities)
+            : this(new Uri(DefaultRemoteServerUrl), desiredCapabilities)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RemoteWebDriver"/> class. This constructor defaults proxy to http://127.0.0.1:4444/wd/hub
+        /// </summary>
+        /// <param name="remoteAddress">URI containing the address of the WebDriver remote server (e.g. http://127.0.0.1:4444/wd/hub).</param>
+        /// <param name="options">An <see cref="DriverOptions"/> object containing the desired capabilities of the browser.</param>
+        public RemoteWebDriver(Uri remoteAddress, DriverOptions options)
+            : this(remoteAddress, ConvertOptionsToCapabilities(options))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RemoteWebDriver"/> class
+        /// </summary>
+        /// <param name="remoteAddress">URI containing the address of the WebDriver remote server (e.g. http://127.0.0.1:4444/wd/hub).</param>
+        /// <param name="desiredCapabilities">An <see cref="ICapabilities"/> object containing the desired capabilities of the browser.</param>
+        public RemoteWebDriver(Uri remoteAddress, ICapabilities desiredCapabilities)
+            : this(remoteAddress, desiredCapabilities, RemoteWebDriver.DefaultCommandTimeout)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RemoteWebDriver"/> class using the specified remote address, desired capabilities, and command timeout.
+        /// </summary>
+        /// <param name="remoteAddress">URI containing the address of the WebDriver remote server (e.g. http://127.0.0.1:4444/wd/hub).</param>
+        /// <param name="desiredCapabilities">An <see cref="ICapabilities"/> object containing the desired capabilities of the browser.</param>
+        /// <param name="commandTimeout">The maximum amount of time to wait for each command.</param>
+        public RemoteWebDriver(Uri remoteAddress, ICapabilities desiredCapabilities, TimeSpan commandTimeout)
+            : this(new HttpCommandExecutor(remoteAddress, commandTimeout), desiredCapabilities)
+        {
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RemoteWebDriver"/> class
@@ -115,36 +168,6 @@ namespace OpenQA.Selenium.Remote
                     this.storage = new RemoteWebStorage(this);
                 }
             }
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="RemoteWebDriver"/> class. This constructor defaults proxy to http://127.0.0.1:4444/wd/hub
-        /// </summary>
-        /// <param name="desiredCapabilities">An <see cref="ICapabilities"/> object containing the desired capabilities of the browser.</param>
-        public RemoteWebDriver(ICapabilities desiredCapabilities)
-            : this(new Uri("http://127.0.0.1:4444/wd/hub"), desiredCapabilities)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="RemoteWebDriver"/> class
-        /// </summary>
-        /// <param name="remoteAddress">URI containing the address of the WebDriver remote server (e.g. http://127.0.0.1:4444/wd/hub).</param>
-        /// <param name="desiredCapabilities">An <see cref="ICapabilities"/> object containing the desired capabilities of the browser.</param>
-        public RemoteWebDriver(Uri remoteAddress, ICapabilities desiredCapabilities)
-            : this(remoteAddress, desiredCapabilities, RemoteWebDriver.DefaultCommandTimeout)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="RemoteWebDriver"/> class using the specified remote address, desired capabilities, and command timeout.
-        /// </summary>
-        /// <param name="remoteAddress">URI containing the address of the WebDriver remote server (e.g. http://127.0.0.1:4444/wd/hub).</param>
-        /// <param name="desiredCapabilities">An <see cref="ICapabilities"/> object containing the desired capabilities of the browser.</param>
-        /// <param name="commandTimeout">The maximum amount of time to wait for each command.</param>
-        public RemoteWebDriver(Uri remoteAddress, ICapabilities desiredCapabilities, TimeSpan commandTimeout)
-            : this(new HttpCommandExecutor(remoteAddress, commandTimeout), desiredCapabilities)
-        {
         }
 
         /// <summary>
@@ -225,19 +248,8 @@ namespace OpenQA.Selenium.Remote
             get
             {
                 string pageSource = string.Empty;
-                if (this.IsSpecificationCompliant)
-                {
-                    string script = "var source = document.documentElement.outerHTML; \n"
-                                    + "if (!source) { source = new XMLSerializer().serializeToString(document); }\n"
-                                    + "return source;";
-                    pageSource = this.ExecuteScript(script).ToString();
-                }
-                else
-                {
-                    Response commandResponse = this.Execute(DriverCommand.GetPageSource, null);
-                    pageSource = commandResponse.Value.ToString();
-                }
-
+                Response commandResponse = this.Execute(DriverCommand.GetPageSource, null);
+                pageSource = commandResponse.Value.ToString();
                 return pageSource;
             }
         }
@@ -398,6 +410,14 @@ namespace OpenQA.Selenium.Remote
         public SessionId SessionId
         {
             get { return this.sessionId; }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this object is a valid action executor.
+        /// </summary>
+        public bool IsActionExecutor
+        {
+            get { return this.IsSpecificationCompliant; }
         }
 
         /// <summary>
@@ -578,7 +598,17 @@ namespace OpenQA.Selenium.Remote
         {
             if (this.IsSpecificationCompliant)
             {
-                return this.FindElements("css selector", "#" + EscapeCssSelector(id));
+                string selector = EscapeCssSelector(id);
+                if (string.IsNullOrEmpty(selector))
+                {
+                    // Finding multiple elements with an empty ID will return
+                    // an empty list. However, finding by a CSS selector of '#'
+                    // throws an exception, even in the multiple elements case,
+                    // which means we need to short-circuit that behavior.
+                    return new List<IWebElement>().AsReadOnly();
+                }
+
+                return this.FindElements("css selector", "#" + selector);
             }
 
             return this.FindElements("id", id);
@@ -605,7 +635,17 @@ namespace OpenQA.Selenium.Remote
             // return this.FindElement("css selector", "." + className);
             if (this.IsSpecificationCompliant)
             {
-                return this.FindElement("css selector", "." + EscapeCssSelector(className));
+                string selector = EscapeCssSelector(className);
+                if (selector.Contains(" "))
+                {
+                    // Finding elements by class name with whitespace is not allowed.
+                    // However, converting the single class name to a valid CSS selector
+                    // by prepending a '.' may result in a still-valid, but incorrect
+                    // selector. Thus, we short-ciruit that behavior here.
+                    throw new InvalidSelectorException("Compound class names not allowed. Cannot have whitespace in class name. Use CSS selectors instead.");
+                }
+
+                return this.FindElement("css selector", "." + selector);
             }
 
             return this.FindElement("class name", className);
@@ -632,7 +672,17 @@ namespace OpenQA.Selenium.Remote
             // return this.FindElements("css selector", "." + className);
             if (this.IsSpecificationCompliant)
             {
-                return this.FindElements("css selector", "." + EscapeCssSelector(className));
+                string selector = EscapeCssSelector(className);
+                if (selector.Contains(" "))
+                {
+                    // Finding elements by class name with whitespace is not allowed.
+                    // However, converting the single class name to a valid CSS selector
+                    // by prepending a '.' may result in a still-valid, but incorrect
+                    // selector. Thus, we short-ciruit that behavior here.
+                    throw new InvalidSelectorException("Compound class names not allowed. Cannot have whitespace in class name. Use CSS selectors instead.");
+                }
+
+                return this.FindElements("css selector", "." + selector);
             }
 
             return this.FindElements("class name", className);
@@ -887,6 +937,42 @@ namespace OpenQA.Selenium.Remote
         }
 
         /// <summary>
+        /// Performs the specified list of actions with this action executor.
+        /// </summary>
+        /// <param name="actionSequenceList">The list of action sequences to perform.</param>
+        public void PerformActions(IList<ActionSequence> actionSequenceList)
+        {
+            if (actionSequenceList == null)
+            {
+                throw new ArgumentNullException("actionSequenceList", "List of action sequences must not be null");
+            }
+
+            if (this.IsSpecificationCompliant)
+            {
+                List<object> objectList = new List<object>();
+                foreach (ActionSequence sequence in actionSequenceList)
+                {
+                    objectList.Add(sequence.ToDictionary());
+                }
+
+                Dictionary<string, object> parameters = new Dictionary<string, object>();
+                parameters["actions"] = objectList;
+                this.Execute(DriverCommand.Actions, parameters);
+            }
+        }
+
+        /// <summary>
+        /// Resets the input state of the action executor.
+        /// </summary>
+        public void ResetInputState()
+        {
+            if (this.IsSpecificationCompliant)
+            {
+                this.Execute(DriverCommand.CancelActions, null);
+            }
+        }
+
+        /// <summary>
         /// Escapes invalid characters in a CSS selector.
         /// </summary>
         /// <param name="selector">The selector to escape.</param>
@@ -1013,15 +1099,65 @@ namespace OpenQA.Selenium.Remote
         /// <param name="desiredCapabilities">Capabilities of the browser</param>
         protected void StartSession(ICapabilities desiredCapabilities)
         {
-            DesiredCapabilities capabilitiesObject = desiredCapabilities as DesiredCapabilities;
             Dictionary<string, object> parameters = new Dictionary<string, object>();
-            parameters.Add("desiredCapabilities", capabilitiesObject.CapabilitiesDictionary);
+            parameters.Add("desiredCapabilities", this.GetLegacyCapabilitiesDictionary(desiredCapabilities));
+
+            Dictionary<string, object> firstMatchCapabilities = this.GetCapabilitiesDictionary(desiredCapabilities);
+
+            List<object> firstMatchCapabilitiesList = new List<object>();
+            firstMatchCapabilitiesList.Add(firstMatchCapabilities);
+
+            Dictionary<string, object> specCompliantCapabilities = new Dictionary<string, object>();
+            specCompliantCapabilities["firstMatch"] = firstMatchCapabilitiesList;
+            parameters.Add("capabilities", specCompliantCapabilities);
+
             Response response = this.Execute(DriverCommand.NewSession, parameters);
 
             Dictionary<string, object> rawCapabilities = (Dictionary<string, object>)response.Value;
             DesiredCapabilities returnedCapabilities = new DesiredCapabilities(rawCapabilities);
             this.capabilities = returnedCapabilities;
             this.sessionId = new SessionId(response.SessionId);
+        }
+
+        /// <summary>
+        /// Gets the capabilities as a dictionary supporting legacy drivers.
+        /// </summary>
+        /// <param name="legacyCapabilities">The dictionary to return.</param>
+        /// <returns>A Dictionary consisting of the capabilities requested.</returns>
+        /// <remarks>This method is only transitional. Do not rely on it. It will be removed
+        /// once browser driver capability formats stabilize.</remarks>
+        protected virtual Dictionary<string, object> GetLegacyCapabilitiesDictionary(ICapabilities legacyCapabilities)
+        {
+            Dictionary<string, object> capabilitiesDictionary = new Dictionary<string, object>();
+            DesiredCapabilities capabilitiesObject = legacyCapabilities as DesiredCapabilities;
+            foreach (KeyValuePair<string, object> entry in capabilitiesObject.CapabilitiesDictionary)
+            {
+                capabilitiesDictionary.Add(entry.Key, entry.Value);
+            }
+
+            return capabilitiesDictionary;
+        }
+
+        /// <summary>
+        /// Gets the capabilities as a dictionary.
+        /// </summary>
+        /// <param name="capabilitiesToConvert">The dictionary to return.</param>
+        /// <returns>A Dictionary consisting of the capabilities requested.</returns>
+        /// <remarks>This method is only transitional. Do not rely on it. It will be removed
+        /// once browser driver capability formats stabilize.</remarks>
+        protected virtual Dictionary<string, object> GetCapabilitiesDictionary(ICapabilities capabilitiesToConvert)
+        {
+            Dictionary<string, object> capabilitiesDictionary = new Dictionary<string, object>();
+            DesiredCapabilities capabilitiesObject = capabilitiesToConvert as DesiredCapabilities;
+            foreach (KeyValuePair<string, object> entry in capabilitiesObject.CapabilitiesDictionary)
+            {
+                if (entry.Key != CapabilityType.Version && entry.Key != CapabilityType.Platform)
+                {
+                    capabilitiesDictionary.Add(entry.Key, entry.Value);
+                }
+            }
+
+            return capabilitiesDictionary;
         }
 
         /// <summary>
@@ -1139,13 +1275,13 @@ namespace OpenQA.Selenium.Remote
         private static object ConvertObjectToJavaScriptObject(object arg)
         {
             IWrapsElement argAsWrapsElement = arg as IWrapsElement;
-            RemoteWebElement argAsElement = arg as RemoteWebElement;
+            IWebElementReference argAsElementReference = arg as IWebElementReference;
             IEnumerable argAsEnumerable = arg as IEnumerable;
             IDictionary argAsDictionary = arg as IDictionary;
 
-            if (argAsElement == null && argAsWrapsElement != null)
+            if (argAsElementReference == null && argAsWrapsElement != null)
             {
-                argAsElement = argAsWrapsElement.WrappedElement as RemoteWebElement;
+                argAsElementReference = argAsWrapsElement.WrappedElement as IWebElementReference;
             }
 
             object converted = null;
@@ -1154,12 +1290,11 @@ namespace OpenQA.Selenium.Remote
             {
                 converted = arg;
             }
-            else if (argAsElement != null)
+            else if (argAsElementReference != null)
             {
-                // TODO: Remove addition of 'id' key when spec is changed.
-                Dictionary<string, object> elementDictionary = new Dictionary<string, object>();
-                elementDictionary.Add("ELEMENT", argAsElement.InternalElementId);
-                elementDictionary.Add("element-6066-11e4-a52e-4f735466cecf", argAsElement.InternalElementId);
+                // TODO: Remove "ELEMENT" addition when all remote ends are spec-compliant.
+                Dictionary<string, object> elementDictionary = argAsElementReference.ToDictionary();
+                elementDictionary.Add("ELEMENT", argAsElementReference.ElementReferenceId);
                 converted = elementDictionary;
             }
             else if (argAsDictionary != null)
@@ -1277,6 +1412,14 @@ namespace OpenQA.Selenium.Remote
                                     alertText = alertDescription["text"].ToString();
                                 }
                             }
+                            else if (errorAsDictionary.ContainsKey("data"))
+                            {
+                                Dictionary<string, object> alertData = errorAsDictionary["data"] as Dictionary<string, object>;
+                                if (alertData != null && alertData.ContainsKey("text"))
+                                {
+                                    alertText = alertData["text"].ToString();
+                                }
+                            }
 
                             throw new UnhandledAlertException(errorMessage, alertText);
 
@@ -1285,6 +1428,9 @@ namespace OpenQA.Selenium.Remote
 
                         case WebDriverResult.InvalidSelector:
                             throw new InvalidSelectorException(errorMessage);
+
+                        case WebDriverResult.NoSuchDriver:
+                            throw new WebDriverException(errorMessage);
 
                         default:
                             throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "{0} ({1})", errorMessage, errorResponse.Status));
@@ -1295,6 +1441,16 @@ namespace OpenQA.Selenium.Remote
                     throw new WebDriverException("Unexpected error. " + errorResponse.Value.ToString());
                 }
             }
+        }
+
+        private static ICapabilities ConvertOptionsToCapabilities(DriverOptions options)
+        {
+            if (options == null)
+            {
+                throw new ArgumentNullException("options", "Driver options must not be null");
+            }
+
+            return options.ToCapabilities();
         }
 
         private object ParseJavaScriptReturnValue(object responseValue)

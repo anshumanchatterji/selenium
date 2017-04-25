@@ -25,7 +25,6 @@ import com.google.common.io.ByteStreams;
 import org.openqa.grid.common.exception.GridException;
 import org.openqa.grid.internal.ExternalSessionKey;
 import org.openqa.grid.internal.Registry;
-import org.openqa.grid.internal.TestSession;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -65,8 +64,8 @@ public abstract class SeleniumBasedRequest extends HttpServletRequestWrapper {
 
   private static List<SeleniumBasedRequestFactory> requestFactories =
     new ImmutableList.Builder<SeleniumBasedRequestFactory>()
-      .add(new LegacySeleniumRequestFactory())
       .add(new WebDriverRequestFactory())
+      .add(new LegacySeleniumRequestFactory())
       .build();
 
   public static SeleniumBasedRequest createFromRequest(HttpServletRequest request, Registry registry) {
@@ -131,10 +130,6 @@ public abstract class SeleniumBasedRequest extends HttpServletRequestWrapper {
    */
   public abstract Map<String, Object> extractDesiredCapability();
 
-  // TODO freynaud remove the TestSession parameter.The listener can modify the
-  // original request instead.
-  public abstract String getNewSessionRequestedCapability(TestSession session);
-
   public RequestType getRequestType() {
     return type;
   }
@@ -151,11 +146,10 @@ public abstract class SeleniumBasedRequest extends HttpServletRequestWrapper {
 
   @Override
   public int getContentLength() {
-    if (body == null){
+    if (body == null) {
       return 0;
-    }else {
-      return body.length;
     }
+    return body.length;
   }
 
   public String getBody() {
@@ -179,7 +173,7 @@ public abstract class SeleniumBasedRequest extends HttpServletRequestWrapper {
     setAttribute("Content-Length", content.length);
   }
 
-  public long getCreationTime(){
+  public long getCreationTime() {
     return timestamp;
   }
 

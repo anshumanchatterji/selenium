@@ -20,10 +20,7 @@ package org.openqa.grid.internal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.openqa.grid.common.RegistrationRequest.APP;
 import static org.openqa.grid.common.RegistrationRequest.MAX_INSTANCES;
-import static org.openqa.grid.common.RegistrationRequest.MAX_SESSION;
-import static org.openqa.grid.common.RegistrationRequest.REMOTE_HOST;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +28,8 @@ import org.openqa.grid.common.RegistrationRequest;
 import org.openqa.grid.internal.mock.GridHelper;
 import org.openqa.grid.internal.mock.MockedRequestHandler;
 import org.openqa.grid.web.servlet.handler.RequestHandler;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,20 +48,18 @@ public class RegistryStateTest {
   @Before
   public void prepareReqRequest() {
 
-    Map<String, Object> config = new HashMap<>();
-    app1.put(APP, "app1");
+    app1.put(CapabilityType.APPLICATION_NAME, "app1");
     app1.put(MAX_INSTANCES, 5);
 
-    app2.put(APP, "app2");
+    app2.put(CapabilityType.APPLICATION_NAME, "app2");
     app2.put(MAX_INSTANCES, 1);
 
-    config.put(REMOTE_HOST, "http://machine1:4444");
-    config.put(MAX_SESSION, 5);
-
     req = new RegistrationRequest();
-    req.addDesiredCapability(app1);
-    req.addDesiredCapability(app2);
-    req.setConfiguration(config);
+    req.getConfiguration().host = "machine1";
+    req.getConfiguration().port = 4444;
+    req.getConfiguration().maxSession = 5;
+    req.getConfiguration().capabilities.add(new DesiredCapabilities(app1));
+    req.getConfiguration().capabilities.add(new DesiredCapabilities(app2));
   }
 
 

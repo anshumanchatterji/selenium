@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.ObjectModel;
-using System.Text.RegularExpressions;
 using OpenQA.Selenium.Internal;
 
 namespace OpenQA.Selenium
@@ -219,11 +218,6 @@ namespace OpenQA.Selenium
             if (classNameToFind == null)
             {
                 throw new ArgumentNullException("classNameToFind", "Cannot find elements when the class name expression is null.");
-            }
-
-            if (new Regex(".*\\s+.*").IsMatch(classNameToFind))
-            {
-                throw new IllegalLocatorException("Compound class names are not supported. Consider searching for one class name and filtering the results.");
             }
 
             By by = new By();

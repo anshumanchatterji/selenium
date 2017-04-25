@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using NUnit.Framework;
-using NUnit.Framework.Constraints;
 using OpenQA.Selenium.Environment;
 
 namespace OpenQA.Selenium
@@ -662,6 +659,11 @@ namespace OpenQA.Selenium
         [IgnoreBrowser(Browser.WindowsPhone, "Cannot type on contentEditable with synthetic events")]
         public void TypingIntoAnIFrameWithContentEditableOrDesignModeSet()
         {
+            if (TestUtilities.IsMarionette(driver))
+            {
+                Assert.Ignore("Marionette does not ContentEditable.");
+            }
+
             driver.Url = richTextPage;
 
             driver.SwitchTo().Frame("editFrame");
@@ -686,6 +688,11 @@ namespace OpenQA.Selenium
         [IgnoreBrowser(Browser.WindowsPhone, "Cannot type on contentEditable with synthetic events")]
         public void NonPrintableCharactersShouldWorkWithContentEditableOrDesignModeSet()
         {
+            if (TestUtilities.IsMarionette(driver))
+            {
+                Assert.Ignore("Marionette does not ContentEditable.");
+            }
+
             driver.Url = richTextPage;
 
             // not tested on mac
@@ -734,6 +741,11 @@ namespace OpenQA.Selenium
         [IgnoreBrowser(Browser.WindowsPhone, "Cannot type on contentEditable with synthetic events")]
         public void ShouldBeAbleToTypeIntoEmptyContentEditableElement()
         {
+            if (TestUtilities.IsMarionette(driver))
+            {
+                Assert.Ignore("Marionette does not ContentEditable.");
+            }
+
             driver.Url = readOnlyPage;
             IWebElement editable = driver.FindElement(By.Id("content-editable"));
 
@@ -750,6 +762,11 @@ namespace OpenQA.Selenium
         [Test]
         public void ShouldBeAbleToTypeIntoContentEditableElementWithExistingValue()
         {
+            if (TestUtilities.IsMarionette(driver))
+            {
+                Assert.Ignore("Marionette does not ContentEditable.");
+            }
+
             driver.Url = readOnlyPage;
             IWebElement editable = driver.FindElement(By.Id("content-editable"));
 

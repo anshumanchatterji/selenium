@@ -1,7 +1,7 @@
 [java]
   src_roots = /java/client/src, /java/client/test, /java/server/src, /java/server/test
-  source_level = 7
-  target_level = 7
+  source_level = 8 
+  target_level = 8
 
 [project]
   ignore = \
@@ -10,6 +10,9 @@
       build, \
       java/client/build, \
       java/server/build
+
+[cache]
+  mode = dir
 
 [test]
   # Maximum timeout of 10 minutes per test (since each suite counts as a test)
@@ -22,7 +25,6 @@
 [alias]
   chrome   = //java/client/src/org/openqa/selenium/chrome:chrome
   firefox  = //java/client/src/org/openqa/selenium/firefox:firefox
-  htmlunit = //java/client/src/org/openqa/selenium/htmlunit:htmlunit
   remote   = //java/client/src/org/openqa/selenium/remote:remote
   safari   = //java/client/src/org/openqa/selenium/safari:safari
 
@@ -31,4 +33,8 @@
   rc-server     = //java/server/src/org/openqa/selenium/server:rc
   selenium-java = //java/client/src/org/openqa/selenium:selenium-java
 
-  se3-server    = //java/server/src/org/openqa/selenium/remote/server:standalone-server
+  selenium-server-standalone = //java/server/src/org/openqa/grid/selenium:selenium
+
+  # Tests
+  firefox-test  = //java/client/test/org/openqa/selenium/firefox:test-synthesized
+  htmlunit-test = //java/client/test/org/openqa/selenium/htmlunit:htmlunit

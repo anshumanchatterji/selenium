@@ -18,12 +18,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Drawing;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.Remoting.Messaging;
-using System.Text;
 using OpenQA.Selenium.Internal;
 
 namespace OpenQA.Selenium.Support.PageObjects
@@ -39,8 +35,8 @@ namespace OpenQA.Selenium.Support.PageObjects
         /// Initializes a new instance of the <see cref="WebElementProxy"/> class.
         /// </summary>
         /// <param name="classToProxy">The <see cref="Type"/> of object for which to create a proxy.</param>
-        /// <param name="locator">The <see cref="IElementLocatorFactory"/> implementation that
-        /// determines how elements are located.</param>
+        /// <param name="locator">The <see cref="IElementLocator"/> implementation that determines
+        /// how elements are located.</param>
         /// <param name="bys">The list of methods by which to search for the elements.</param>
         /// <param name="cache"><see langword="true"/> to cache the lookup to the element; otherwise, <see langword="false"/>.</param>
         private WebElementProxy(Type classToProxy, IElementLocator locator, IEnumerable<By> bys, bool cache)
